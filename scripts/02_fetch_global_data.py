@@ -30,16 +30,33 @@ logger = setup_logger("02_fetch_global")
 # ----------------------------------------------
 
 def fetch_fred_series(series_id: str, start: str, end: str) -> pd.Series:
-    """Try to fetch a series from FRED via pandas-datareader."""
+    """Fetch a series from FRED via direct API request or pandas-datareader."""
+    api_key = getattr(config, "FRED_API_KEY", "")
+    if api_key:
+        try:
+            import requests
+            url = (f"https://api.stlouisfed.org/fred/series/observations?"
+                   f"series_id={series_id}&api_key={api_key}&file_type=json"
+                   f"&observation_start={start}&observation_end={end}")
+            res = requests.get(url, timeout=15).json()
+            if "observations" in res:
+                df = pd.DataFrame(res["observations"])
+                df["date"] = pd.to_datetime(df["date"])
+                df["value"] = pd.to_numeric(df["value"], errors="coerce")
+                s = df.set_index("date")["value"].dropna()
+                logger.info(f"    [OK] FRED API ({series_id}): {len(s)} observations")
+                return s
+        except Exception as e:
+            logger.warning(f"  FRED API direct request failed for {series_id}: {e}")
+
     try:
         import pandas_datareader.data as web
         df = web.DataReader(series_id, "fred", start, end)
-        return df.iloc[:, 0]
-    except ImportError:
-        logger.warning("pandas-datareader not installed; skipping FRED source.")
-        return pd.Series(dtype=float)
+        s = df.iloc[:, 0].dropna()
+        logger.info(f"    [OK] FRED datareader ({series_id}): {len(s)} observations")
+        return s
     except Exception as e:
-        logger.warning(f"FRED fetch failed for {series_id}: {e}")
+        logger.warning(f"  FRED datareader fetch failed for {series_id}: {e}")
         return pd.Series(dtype=float)
 
 

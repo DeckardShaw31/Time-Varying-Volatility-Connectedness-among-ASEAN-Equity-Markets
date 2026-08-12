@@ -22,6 +22,11 @@ from scipy import linalg
 # Suppress statsmodels frequency warnings in rolling loops
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", module="statsmodels")
+try:
+    from statsmodels.tools.sm_exceptions import ValueWarning
+    warnings.filterwarnings("ignore", category=ValueWarning)
+except ImportError:
+    pass
 
 # ----------------------------------------------
 # Logging

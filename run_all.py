@@ -24,8 +24,18 @@ if hasattr(sys.stderr, "reconfigure"):
         pass
 
 import time
+import warnings
 import importlib
 from pathlib import Path
+
+# Suppress statsmodels date index warnings globally
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", module="statsmodels")
+try:
+    from statsmodels.tools.sm_exceptions import ValueWarning
+    warnings.filterwarnings("ignore", category=ValueWarning)
+except ImportError:
+    pass
 
 
 # Ensure project root is on path

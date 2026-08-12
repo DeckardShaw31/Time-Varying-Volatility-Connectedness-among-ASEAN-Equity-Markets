@@ -13,7 +13,17 @@ Baseline: BIC lag selection, 10-day forecast horizon
 """
 
 import sys
+import warnings
 from pathlib import Path
+
+# Suppress statsmodels warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", module="statsmodels")
+try:
+    from statsmodels.tools.sm_exceptions import ValueWarning
+    warnings.filterwarnings("ignore", category=ValueWarning)
+except ImportError:
+    pass
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
