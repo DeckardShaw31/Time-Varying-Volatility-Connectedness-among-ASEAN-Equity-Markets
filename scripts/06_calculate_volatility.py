@@ -82,10 +82,14 @@ def compute_volatility(returns_df: pd.DataFrame,
         else:
             sub["vol_absolute"] = np.nan
 
-        # 4. Log-transform of Parkinson volatility for VAR estimation
+        # 4. Log-transforms of all volatility proxies for VAR estimation
         if has_hl:
             sub["log_vol_parkinson"] = log_volatility(
                 sub["vol_parkinson"], config.PARKINSON_EPSILON)
+        sub["log_vol_squared"] = log_volatility(
+            sub["vol_squared"], config.PARKINSON_EPSILON)
+        sub["log_vol_absolute"] = log_volatility(
+            sub["vol_absolute"], config.PARKINSON_EPSILON)
 
         results.append(sub)
 
@@ -118,11 +122,13 @@ def build_volatility_panel(vol_df: pd.DataFrame,
     """
     logger.info(f"Building {measure} panel ({sync_type}) ...")
 
-    # Check if measure uses log transform
-    use_col = measure
-    if measure == "vol_parkinson" and "log_vol_parkinson" in vol_df.columns:
-        use_col = "log_vol_parkinson"
-        logger.info(f"  Using log-transformed Parkinson volatility")
+    # Automatically use log-transformed measure for VAR estimation consistency
+    log_col = f"log_{measure}" if not measure.startswith("log_") else measure
+    if log_col in vol_df.columns:
+        use_col = log_col
+        logger.info(f"  Using log-transformed column: {use_col}")
+    else:
+        use_col = measure
 
     panel = vol_df.pivot_table(
         index="date", columns="country", values=use_col, aggfunc="first"

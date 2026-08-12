@@ -41,16 +41,16 @@ DEFAULT_EVENTS = [
         "event_date": "2011-07-01",
         "shock_start": "2011-07-01",
         "shock_end": "2012-06-30",
-        "tranquil_start": "2010-07-01",
+        "tranquil_start": "2011-03-30",
         "tranquil_end": "2011-06-30",
-        "source_for_dates": "Literature (Diebold-Yilmaz 2014)",
+        "source_for_dates": "Literature (Diebold-Yilmaz 2014); Note: 49 rolling TCI obs pre-shock",
     },
     {
         "event_name": "Taper Tantrum",
         "event_date": "2013-05-22",
         "shock_start": "2013-05-22",
         "shock_end": "2013-09-30",
-        "tranquil_start": "2013-01-01",
+        "tranquil_start": "2013-01-02",
         "tranquil_end": "2013-05-21",
         "source_for_dates": "Bernanke testimony, May 2013",
     },
@@ -85,19 +85,19 @@ DEFAULT_EVENTS = [
         "event_name": "Russia-Ukraine War",
         "event_date": "2022-02-24",
         "shock_start": "2022-02-24",
-        "shock_end": "2022-06-30",
+        "shock_end": "2022-05-31",
         "tranquil_start": "2021-09-01",
         "tranquil_end": "2022-02-23",
-        "source_for_dates": "Russian invasion of Ukraine",
+        "source_for_dates": "Russian invasion of Ukraine (non-overlapping window)",
     },
     {
         "event_name": "Global Monetary Tightening 2022",
-        "event_date": "2022-03-16",
-        "shock_start": "2022-03-16",
+        "event_date": "2022-06-01",
+        "shock_start": "2022-06-01",
         "shock_end": "2022-12-31",
         "tranquil_start": "2021-09-01",
-        "tranquil_end": "2022-03-15",
-        "source_for_dates": "Fed rate hike cycle begins",
+        "tranquil_end": "2022-02-23",
+        "source_for_dates": "Fed 75bps rate hike acceleration (non-overlapping window)",
     },
     {
         "event_name": "US Banking Crisis 2023",
@@ -120,52 +120,58 @@ def create_event_windows() -> pd.DataFrame:
     return events
 
 
-def bootstrap_mean_diff(shock_vals: np.ndarray, tranquil_vals: np.ndarray,
-                         n_boot: int = 10000, ci: float = 0.95) -> dict:
+def moving_block_bootstrap_mean_diff(shock_vals: np.ndarray, tranquil_vals: np.ndarray,
+                                     block_size: int = 20, n_boot: int = 5000, ci: float = 0.95) -> dict:
     """
-    Bootstrap confidence interval for the difference in means.
-    H0: mean(shock) - mean(tranquil) = 0
+    Moving-block bootstrap confidence interval for difference in means (mean_shock - mean_tranquil).
+    Accurately preserves time-series dependence within event windows.
     """
     observed_diff = shock_vals.mean() - tranquil_vals.mean()
     n_shock = len(shock_vals)
     n_tranquil = len(tranquil_vals)
 
-    boot_diffs = np.empty(n_boot)
-    combined = np.concatenate([shock_vals, tranquil_vals])
+    def draw_mbb_sample(arr: np.ndarray, target_len: int, b_size: int, rng: np.random.Generator) -> np.ndarray:
+        n = len(arr)
+        if n <= b_size:
+            return rng.choice(arr, size=target_len, replace=True)
+        n_blocks_needed = int(np.ceil(target_len / b_size))
+        starts = rng.integers(0, n - b_size + 1, size=n_blocks_needed)
+        sample_blocks = [arr[s:s + b_size] for s in starts]
+        return np.concatenate(sample_blocks)[:target_len]
 
+    boot_diffs = np.empty(n_boot)
     rng = np.random.default_rng(42)
+
     for b in range(n_boot):
-        perm = rng.permutation(combined)
-        boot_shock = perm[:n_shock]
-        boot_tranquil = perm[n_shock:n_shock + n_tranquil]
-        boot_diffs[b] = boot_shock.mean() - boot_tranquil.mean()
+        b_shock = draw_mbb_sample(shock_vals, n_shock, block_size, rng)
+        b_tranquil = draw_mbb_sample(tranquil_vals, n_tranquil, block_size, rng)
+        boot_diffs[b] = b_shock.mean() - b_tranquil.mean()
 
     alpha = (1 - ci) / 2
     ci_lower = np.percentile(boot_diffs, alpha * 100)
     ci_upper = np.percentile(boot_diffs, (1 - alpha) * 100)
-    p_value = np.mean(np.abs(boot_diffs) >= np.abs(observed_diff))
+    p_value = np.mean(boot_diffs <= 0) if observed_diff > 0 else np.mean(boot_diffs >= 0)
 
     return {
         "observed_diff": observed_diff,
         "ci_lower": ci_lower,
         "ci_upper": ci_upper,
         "p_value": p_value,
-        "significant": p_value < 0.05,
+        "significant": (ci_lower > 0) if observed_diff > 0 else (ci_upper < 0),
     }
 
 
 def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
                     net_df: pd.DataFrame = None) -> pd.DataFrame:
     """
-    For each event, compare TCI during shock vs. tranquil periods.
+    For each event, compare TCI during shock vs. tranquil periods using Moving-Block Bootstrap.
     """
-    logger.info("Event-window analysis ...")
+    logger.info("Event-window analysis with Moving-Block Bootstrap ...")
 
     results = []
     for _, event in events_df.iterrows():
         name = event["event_name"]
 
-        # Extract TCI for shock and tranquil periods
         shock_mask = (tci_series.index >= event["shock_start"]) & \
                      (tci_series.index <= event["shock_end"])
         tranquil_mask = (tci_series.index >= event["tranquil_start"]) & \
@@ -179,17 +185,13 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
                           f"(shock={len(shock_vals)}, tranquil={len(tranquil_vals)})")
             continue
 
-        # Basic comparison
         shock_mean = shock_vals.mean()
         tranquil_mean = tranquil_vals.mean()
         diff_mean = shock_mean - tranquil_mean
         diff_median = np.median(shock_vals) - np.median(tranquil_vals)
 
-        # T-test
         t_stat, t_pval = stats.ttest_ind(shock_vals, tranquil_vals)
-
-        # Bootstrap
-        boot = bootstrap_mean_diff(shock_vals, tranquil_vals)
+        boot = moving_block_bootstrap_mean_diff(shock_vals, tranquil_vals)
 
         result = {
             "event_name": name,
@@ -207,7 +209,6 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
             "contagion": "Yes" if (diff_mean > 0 and boot["significant"]) else "No",
         }
 
-        # Add net position changes per market
         if net_df is not None:
             for country in config.COUNTRY_ORDER:
                 col = f"Net_{country}"
@@ -220,7 +221,7 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
         results.append(result)
         sign = "↑ CONTAGION" if result["contagion"] == "Yes" else "-"
         logger.info(f"  {name}: Δ TCI = {diff_mean:+.2f}% "
-                    f"(p={boot['p_value']:.3f}) {sign}")
+                    f"CI=[{boot['ci_lower']:.2f}, {boot['ci_upper']:.2f}] {sign}")
 
     return pd.DataFrame(results)
 
@@ -228,37 +229,41 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
 def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
     """
     OLS regression of TCI on global factors with HAC standard errors.
-    TCI_t = α + β₁·GPR + β₂·VIX + β₃·ΔOil + β₄·ΔDGS2 + β₅·ΔDollar + ε_t
+    Subsamples month-end observations to eliminate 249-day rolling-window dependence.
+    Equation: TCI_t = α + β₁·GPR_t + β₂·VIX_t + β₃·ΔOil_t + β₄·ΔDGS2_t + β₅·ΔDollar_t + ε_t
     """
     from statsmodels.regression.linear_model import OLS
     from statsmodels.tools import add_constant
 
-    logger.info("HAC regression: TCI ~ global factors ...")
+    logger.info("HAC regression (month-end subsampled): TCI ~ global factors ...")
 
-    # Align TCI and global data
     merged = pd.DataFrame({"TCI": tci_series})
 
-    # Map global columns
-    global_cols_map = {
-        "VIX": "VIX",
-        "d_Brent": "ΔOil",
-        "d_DGS2": "ΔDGS2",
-        "d_DollarIdx": "ΔDollar",
-        "d_SP500": "ΔSP500",
-    }
-
-    for src_col, label in global_cols_map.items():
+    # Add global factors
+    for src_col, label in [("VIX", "VIX"), ("d_Brent", "ΔOil"), ("d_DGS2", "ΔDGS2"),
+                           ("d_DollarIdx", "ΔDollar"), ("d_SP500", "ΔSP500")]:
         if src_col in global_df.columns:
             merged[label] = global_df[src_col]
 
-    # GPR (if available)
-    gpr_path = config.DATA_CLEANED / "global_daily_cleaned.csv"
-    if gpr_path.exists():
-        gpr_df = pd.read_csv(gpr_path, index_col=0, parse_dates=True)
-        for col in ["GPR", "GPRD", "gpr"]:
-            if col in gpr_df.columns:
-                merged["GPR"] = gpr_df[col]
-                break
+    # Search for GPR in global_df or raw files
+    gpr_found = False
+    for col in ["GPRD", "GPR", "GPRD_ACT", "GPRD_THREAT", "gpr"]:
+        if col in global_df.columns:
+            merged["GPR"] = global_df[col]
+            gpr_found = True
+            break
+
+    if not gpr_found:
+        gpr_path = config.find_file("gpr_daily.csv", "data_gpr_daily(till_aug_10).csv", "global_daily_raw.csv")
+        if gpr_path.exists():
+            try:
+                gpr_raw = pd.read_csv(gpr_path)
+                if "DAY" in gpr_raw.columns and "GPRD" in gpr_raw.columns:
+                    gpr_raw["date"] = pd.to_datetime(gpr_raw["DAY"].astype(str), format="%Y%m%d", errors="coerce")
+                    gpr_raw = gpr_raw.set_index("date")
+                    merged["GPR"] = gpr_raw["GPRD"]
+            except Exception:
+                pass
 
     merged = merged.dropna()
 
@@ -266,31 +271,36 @@ def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
         logger.warning(f"  Insufficient observations ({len(merged)}) for regression")
         return {}
 
-    # Define X and y
-    y = merged["TCI"]
-    x_cols = [c for c in merged.columns if c != "TCI"]
+    # Subsample to month-end observations to eliminate rolling-window 249-day overlap
+    monthly_merged = merged.resample("ME").last().dropna()
+    logger.info(f"  Month-end subsampled observations: {len(monthly_merged)} months")
+
+    y = monthly_merged["TCI"]
+    x_cols = [c for c in monthly_merged.columns if c != "TCI"]
 
     if not x_cols:
         logger.warning("  No explanatory variables available for regression")
         return {}
 
-    X = add_constant(merged[x_cols])
+    X = add_constant(monthly_merged[x_cols])
 
-    # OLS with HAC (Newey-West) standard errors
+    # OLS with HAC (Newey-West) standard errors using 12-month maxlags
+    nw_lags = 12
     model = OLS(y, X)
-    # Use Newey-West with automatic bandwidth
-    nw_lags = int(np.ceil(4 * (len(y) / 100) ** (2 / 9)))
     result = model.fit(cov_type="HAC", cov_kwds={"maxlags": nw_lags})
 
     logger.info(f"\n{result.summary()}")
 
-    # Save key results
     coef_table = pd.DataFrame({
         "coefficient": result.params,
         "std_error": result.bse,
         "t_stat": result.tvalues,
         "p_value": result.pvalues,
     })
+
+    out_table = config.OUT_TABLES / "hac_regression_coefficients.csv"
+    coef_table.to_csv(out_table)
+    logger.info(f"  Saved HAC regression table -> {out_table}")
 
     return {
         "result": result,

@@ -108,8 +108,8 @@ nckh/
 - **Role**: Cleans raw data and builds two common-date synchronized datasets.
 - **Implementation**:
   - Normalizes dates, removes duplicates, validates numeric types, and verifies $H_t \ge L_t > 0$.
-  - **Intersection Dataset**: Keeps only trading days common to **all 6 ASEAN markets** (3,343 observations).
-  - **Weekly Dataset**: Takes the last available observation per ISO week to eliminate nonsynchronous trading friction (774 weekly observations).
+  - **Intersection Dataset**: Keeps only trading days common to **all 6 ASEAN markets** (3,343 observations; sample end date **July 17, 2026**).
+  - **Weekly Dataset**: Aggregates daily OHLCV within each ISO week (`year_week`): Weekly High = $\max(H)$, Weekly Low = $\min(L)$, Weekly Close = last close.
 - **Outputs**: `data/cleaned/asean_indices_intersection.csv` and `data/cleaned/asean_indices_weekly.csv`.
 
 #### `scripts/05_calculate_returns.py` — *Stage 5: Log-Return Calculations*
@@ -126,8 +126,8 @@ nckh/
   1. **Parkinson Range Volatility (Baseline)**: $v_{i,t}^P = \frac{[\ln(H_{i,t} / L_{i,t})]^2}{4 \ln(2)}$
   2. **Squared Returns (Robustness)**: $v_{i,t}^{SR} = (r_{i,t})^2$
   3. **Absolute Returns (Additional)**: $v_{i,t}^{AR} = |r_{i,t}|$
-  4. **Log Transformation**: $x_{i,t} = \ln(v_{i,t}^P + \varepsilon)$ with $\varepsilon = 10^{-8}$ to prevent $\log(0)$ in VAR estimation.
-- **Outputs**: Wide-format volatility panels `data/processed/panel_vol_parkinson_intersection.csv` and `panel_vol_squared_intersection.csv`.
+  4. **Consistent Log Transformation**: $x_{i,t} = \ln(v_{i,t} + \varepsilon)$ with $\varepsilon = 10^{-8}$ applied **consistently across all proxies** to ensure econometric alignment and comparable $\text{TCI}$ scales.
+- **Outputs**: Wide-format volatility panels `data/processed/panel_vol_parkinson_intersection.csv`, `panel_vol_squared_intersection.csv`, and `panel_vol_absolute_intersection.csv`.
 
 #### `scripts/07_descriptive_stats.py` — *Stage 7: Statistics & Unit Root Diagnostics*
 - **Role**: Computes descriptive statistics and econometric tests for returns and volatility series.
@@ -146,7 +146,7 @@ nckh/
 #### `scripts/08_var_model.py` — *Stage 8: Full-Sample VAR & GFEVD*
 - **Role**: Estimates the 6-variable vector autoregression $x_t = \sum_{k=1}^p \Phi_k x_{t-k} + \varepsilon_t$ and full-sample GFEVD.
 - **Implementation**:
-  - Selects optimal lag order using AIC, BIC, and HQIC criteria (max lag 10; BIC selects lag 3 for Parkinson, lag 6 for Squared).
+  - Selects optimal lag order using AIC, BIC, and HQIC criteria (max lag 10; BIC selects lag 3 for Parkinson, lag 1 for Log Squared).
   - Verifies stability: `result.is_stable()` checks that all VAR polynomial roots lie outside the unit circle ($|z| > 1$).
   - Computes residual Durbin-Watson and Portmanteau autocorrelation tests.
   - Generates the full-sample $6 \times 6$ GFEVD matrix and formats the baseline connectedness table.
@@ -161,20 +161,20 @@ nckh/
 - **Outputs**: `outputs/results/rolling_connectedness_vol_parkinson_intersection.csv` (3,094 windows) and plots `tci_rolling_*.png`, `net_connectedness_*.png`.
 
 #### `scripts/10_shock_analysis.py` — *Stage 10: Event Contagion & HAC Regressions*
-- **Role**: Tests for financial contagion during 8 major historical shocks and estimates global driver regressions.
+- **Role**: Tests for financial contagion during historical shocks and estimates global driver regressions.
 - **Implementation**:
-  - **Event-Window Analysis**: Compares mean $\text{TCI}$ during shock windows vs. pre-shock tranquil benchmark windows.
-  - **Bootstrap Confidence Intervals**: 10,000 iterations to evaluate $H_0: \mu_{\text{shock}} - \mu_{\text{tranquil}} = 0$. Significant positive shifts ($\Delta \text{TCI} > 0, p < 0.05$) confirm **contagion** rather than simple interdependence.
-  - **HAC (Newey-West) Regression**: Estimates OLS regression of $\text{TCI}$ on global variables with heteroskedasticity and autocorrelation-consistent standard errors:
+  - **Event-Window Analysis**: Compares mean $\text{TCI}$ during shock windows vs. pre-shock tranquil benchmark windows across 8 non-overlapping shock events.
+  - **Moving-Block Bootstrap (MBB)**: Uses block length $B = 20$ trading days to generate 95% bootstrap confidence intervals for $\Delta \text{TCI} = \bar{\text{TCI}}_{\text{shock}} - \bar{\text{TCI}}_{\text{tranquil}}$, accurately preserving time-series persistence.
+  - **Month-End HAC Regression**: Subsamples month-end $\text{TCI}$ observations (eliminating daily 249-observation rolling overlap) and estimates OLS with Newey-West HAC standard errors ($L = 12$ months):
     $$\text{TCI}_t = \alpha + \beta_1 \text{GPR}_t + \beta_2 \text{VIX}_t + \beta_3 \Delta \text{Oil}_t + \beta_4 \Delta \text{DGS2}_t + \beta_5 \Delta \text{Dollar}_t + \beta_6 \Delta \text{S\&P500}_t + \varepsilon_t$$
 - **Outputs**: `deliverables/event_windows.csv`, `outputs/tables/shock_analysis_results.csv`, and `outputs/tables/hac_regression_coefficients.csv`.
 
-#### `scripts/11_robustness.py` — *Stage 11: Robustness Matrix & DCC-GARCH*
-- **Role**: Conducts sensitivity analysis across alternative model specifications and estimates multivariate GARCH.
+#### `scripts/11_robustness.py` — *Stage 11: Robustness Matrix & Conditional Correlations*
+- **Role**: Conducts sensitivity analysis across alternative specifications and estimates conditional correlations.
 - **Implementation**:
-  - **Robustness Grid**: Re-estimates rolling connectedness across window sizes $W \in \{200, 250, 300\}$, forecast horizons $H \in \{5, 10, 20\}$, and volatility proxies (Parkinson vs. Squared).
-  - **DCC-GARCH**: Fits univariate GARCH(1,1) models to each market and computes time-varying conditional correlations using exponential smoothing ($\lambda = 0.94$).
-- **Outputs**: `outputs/tables/robustness_summary.csv` (18 combinations), `outputs/figures/robustness_comparison.png`, and `outputs/results/dcc_garch_correlations_vol_parkinson_intersection.csv`.
+  - **Comprehensive Robustness Grid**: Re-estimates rolling connectedness across window sizes $W \in \{200, 250, 300\}$, forecast horizons $H \in \{5, 10, 20\}$, logged volatility proxies (Parkinson, Squared, Absolute), and frequencies (Daily vs. Weekly).
+  - **GARCH-Filtered EWMA Conditional Correlations**: Fits univariate GARCH(1,1) models to each market and computes time-varying conditional correlations using exponential smoothing ($\lambda = 0.94$).
+- **Outputs**: `outputs/tables/robustness_summary.csv`, `outputs/figures/robustness_comparison.png`, and `outputs/results/garch_ewma_correlations_*.csv`.
 
 ---
 
@@ -195,12 +195,12 @@ nckh/
 
 ### 1. Connectedness & Systemic Roles (2010–2026)
 
-- **Baseline Total Connectedness Index ($\text{TCI}$)**:
-  - **Parkinson Range Volatility (Baseline)**: Full-sample $\text{TCI} = \mathbf{17.15\%}$. Rolling 250-day $\text{TCI}$ averages $\mathbf{20.04\%}$ (range: 3.21% – 56.03%).
-  - **Squared Returns (Proxy)**: Full-sample $\text{TCI} = \mathbf{53.90\%}$. Rolling 250-day $\text{TCI}$ averages $\mathbf{39.79\%}$ (range: 4.85% – 82.58%).
+- **Baseline Total Connectedness Index ($\text{TCI}$)** (Effective Sample: Jan 4, 2010 – Jul 17, 2026):
+  - **Log Parkinson Range Volatility (Baseline)**: Full-sample $\text{TCI} = \mathbf{17.15\%}$. Rolling 250-day $\text{TCI}$ averages $\mathbf{20.04\%}$ (range: 3.21% – 56.03%).
+  - **Log Squared Returns (Proxy)**: Full-sample $\text{TCI} = \mathbf{9.26\%}$.
 - **Market Classifications**:
-  - **Net Transmitters**: **Thailand** ($\text{Net} = +33.50$) and **Singapore** ($\text{Net} = +5.65$).
-  - **Net Receivers**: **Indonesia** ($\text{Net} = -15.31$) and **Philippines** ($\text{Net} = -15.02$).
+  - **Net Transmitters**: **Thailand** ($\text{Net} = +3.21$) and **Indonesia** ($\text{Net} = +2.74$).
+  - **Net Receivers**: **Singapore** ($\text{Net} = -2.98$) and **Philippines** ($\text{Net} = -1.52$).
   - **Isolated Market**: **Vietnam** ($\text{FROM} = 6.89\%, \text{TO} = 5.94\%$), displaying low direct spillover sensitivity and acting as a regional diversification hedge.
 
 ### 2. Event-Window Contagion Analysis

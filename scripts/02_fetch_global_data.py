@@ -170,10 +170,11 @@ def fetch_daily_globals() -> pd.DataFrame:
 def load_gpr_data() -> dict:
     """Load GPR daily and AI-GPR daily CSVs if available."""
     gpr_data = {}
+    gpr_path = config.find_file("gpr_daily.csv", "data_gpr_daily(till_aug_10).csv")
+    gpr_ai_path = config.find_file("gpr_ai_daily.csv")
 
-    for label, path in [("GPR_daily", config.GPR_DAILY_FILE),
-                        ("GPR_AI_daily", config.GPR_AI_DAILY_FILE)]:
-        if path.exists():
+    for label, path in [("GPR_daily", gpr_path), ("GPR_AI_daily", gpr_ai_path)]:
+        if path and path.exists():
             logger.info(f"  Loading {label} from {path}")
             try:
                 df = pd.read_csv(path)
@@ -186,7 +187,6 @@ def load_gpr_data() -> dict:
                     date_col = df.columns[0]
 
                 if date_col:
-                    # Check if YYYYMMDD integer format
                     if pd.api.types.is_numeric_dtype(df[date_col]):
                         df["date"] = pd.to_datetime(df[date_col].astype(str), format="%Y%m%d", errors="coerce")
                     else:
@@ -197,45 +197,52 @@ def load_gpr_data() -> dict:
             except Exception as e:
                 logger.warning(f"    Failed to load {label}: {e}")
         else:
-            logger.info(f"  {label} file not found at {path} - skipping.")
+            logger.info(f"  {label} file not found - skipping.")
 
     return gpr_data
 
 
 def load_epu_data() -> dict:
-    """Load EPU Excel/CSV files from data/raw/epu/ if available."""
+    """Load EPU Excel/CSV files from data/raw/epu/ or root if available."""
     epu_data = {}
-    epu_dir = config.EPU_DIR
-
-    if not epu_dir.exists():
-        logger.info("  EPU directory not found - skipping.")
-        return epu_data
-
-    for f in epu_dir.iterdir():
-        if f.suffix in (".xlsx", ".xls", ".csv"):
-            logger.info(f"  Loading EPU file: {f.name}")
+    epu_path = config.find_file("All_Country_Data(EPU).csv", "All_Country_Data.csv")
+    if epu_path and epu_path.exists():
+        logger.info(f"  Loading EPU file: {epu_path.name}")
+        try:
             try:
-                if f.suffix == ".csv":
-                    try:
-                        df = pd.read_csv(f, encoding="utf-8")
-                    except UnicodeDecodeError:
-                        df = pd.read_csv(f, encoding="latin1")
-                else:
-                    df = pd.read_excel(f, engine="openpyxl")
+                df = pd.read_csv(epu_path, encoding="utf-8")
+            except UnicodeDecodeError:
+                df = pd.read_csv(epu_path, encoding="latin1")
 
-                # If Year and Month columns exist, construct date
-                if "Year" in df.columns and "Month" in df.columns:
-                    valid_ym = df["Year"].notna() & df["Month"].notna()
-                    df.loc[valid_ym, "date"] = pd.to_datetime(
-                        df.loc[valid_ym, "Year"].astype(int).astype(str) + "-" +
-                        df.loc[valid_ym, "Month"].astype(int).astype(str).str.zfill(2) + "-01",
-                        errors="coerce"
-                    )
+            if "Year" in df.columns and "Month" in df.columns:
+                valid_ym = df["Year"].notna() & df["Month"].notna()
+                df.loc[valid_ym, "date"] = pd.to_datetime(
+                    df.loc[valid_ym, "Year"].astype(int).astype(str) + "-" +
+                    df.loc[valid_ym, "Month"].astype(int).astype(str).str.zfill(2) + "-01",
+                    errors="coerce"
+                )
+            epu_data["All_Country_Data"] = df
+            logger.info(f"    [OK] {len(df)} rows, columns: {list(df.columns)[:5]}")
+        except Exception as e:
+            logger.warning(f"    Failed: {e}")
 
-                epu_data[f.stem] = df
-                logger.info(f"    [OK] {len(df)} rows, columns: {list(df.columns)[:5]}")
-            except Exception as e:
-                logger.warning(f"    Failed: {e}")
+    # Fallback to checking epu directory
+    epu_dir = config.EPU_DIR
+    if epu_dir.exists():
+        for f in epu_dir.iterdir():
+            if f.suffix in (".xlsx", ".xls", ".csv") and f.stem not in epu_data:
+                try:
+                    df = pd.read_csv(f) if f.suffix == ".csv" else pd.read_excel(f)
+                    if "Year" in df.columns and "Month" in df.columns:
+                        valid_ym = df["Year"].notna() & df["Month"].notna()
+                        df.loc[valid_ym, "date"] = pd.to_datetime(
+                            df.loc[valid_ym, "Year"].astype(int).astype(str) + "-" +
+                            df.loc[valid_ym, "Month"].astype(int).astype(str).str.zfill(2) + "-01",
+                            errors="coerce"
+                        )
+                    epu_data[f.stem] = df
+                except Exception:
+                    pass
 
     return epu_data
 
@@ -252,25 +259,22 @@ def main():
     # 1. Fetch daily globals
     daily = fetch_daily_globals()
 
+    # 2. Load GPR
+    gpr = load_gpr_data()
+    if "GPR_daily" in gpr:
+        gpr_df = gpr["GPR_daily"]
+        if "date" in gpr_df.columns:
+            gpr_df = gpr_df.set_index("date")
+            gpr_cols = [c for c in gpr_df.columns if c != "date"]
+            if not daily.empty:
+                daily = daily.join(gpr_df[gpr_cols], how="outer")
+
     if not daily.empty:
         daily_path = config.DATA_RAW / "global_daily_raw.csv"
         del_path   = config.DELIVERABLES / "global_daily_raw.csv"
         daily.to_csv(daily_path)
         daily.to_csv(del_path)
-        logger.info(f"  Saved daily globals -> {daily_path}")
-
-    # 2. Load GPR
-    gpr = load_gpr_data()
-    # If GPR daily exists, merge into the daily file
-    if "GPR_daily" in gpr:
-        gpr_df = gpr["GPR_daily"]
-        if "date" in gpr_df.columns:
-            gpr_df = gpr_df.set_index("date")
-            # Identify GPR value columns
-            gpr_cols = [c for c in gpr_df.columns if c != "date"]
-            if not daily.empty:
-                daily = daily.join(gpr_df[gpr_cols], how="outer")
-                daily.to_csv(config.DELIVERABLES / "global_daily_raw.csv")
+        logger.info(f"  Saved daily globals -> {daily_path} and {del_path}")
 
     # 3. Load EPU and GPR Monthly
     epu = load_epu_data()

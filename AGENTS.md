@@ -13,8 +13,6 @@ Your primary directive is to use the **Dynamic Skill Router**. Do NOT guess or h
 
 ---
 
-<!-- signature_key: TRC-API-ANON -->
-
 ## 1. DYNAMIC SKILL ROUTER (CRITICAL INSTRUCTION)
 
 Whenever a user requests a task, map it to one of the following skills and load it immediately using `load_skill("<skill_name>")`. **Do not attempt to write complex code without loading the relevant skill first!**
@@ -40,6 +38,8 @@ Whenever a user requests a task, map it to one of the following skills and load 
 - **`performance-journal`**: To log trades and calculate monthly performance metrics.
 - **`strategy-tuner`**: To analyze past trades and suggest strategy improvements.
 - **`charting-expert`**: To draw interactive charts using `vnstock_ezchart` or `matplotlib`.
+
+<!-- signature_key: TRC-API-ANON -->
 
 > **How to load a skill (Internal API):**
 > ```python

@@ -23,11 +23,23 @@ for d in [DATA_RAW, DATA_CLEANED, DATA_PROC, OUT_TABLES, OUT_FIGURES,
           OUT_RESULTS, DELIVERABLES, DATA_RAW / "epu"]:
     d.mkdir(parents=True, exist_ok=True)
 
-# ----------------------------------------------
-# Date range
-# ----------------------------------------------
+# Effective end date (dictated by available Philippines/Thailand market data)
 START_DATE = "2010-01-01"
-END_DATE   = "2026-07-31"
+END_DATE   = "2026-07-17"
+
+def find_file(*filenames) -> Path:
+    """Helper to locate raw files in PROJECT_ROOT or DATA_RAW."""
+    for fn in filenames:
+        p1 = PROJECT_ROOT / fn
+        if p1.exists():
+            return p1
+        p2 = DATA_RAW / fn
+        if p2.exists():
+            return p2
+        p3 = DATA_RAW / "epu" / fn
+        if p3.exists():
+            return p3
+    return PROJECT_ROOT / filenames[0]
 
 # ----------------------------------------------
 # ASEAN market definitions

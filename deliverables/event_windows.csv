@@ -1,9 +1,9 @@
 event_name,event_date,shock_start,shock_end,tranquil_start,tranquil_end,source_for_dates
-European Debt Crisis,2011-07-01,2011-07-01,2012-06-30,2010-07-01,2011-06-30,Literature (Diebold-Yilmaz 2014)
-Taper Tantrum,2013-05-22,2013-05-22,2013-09-30,2013-01-01,2013-05-21,"Bernanke testimony, May 2013"
+European Debt Crisis,2011-07-01,2011-07-01,2012-06-30,2011-03-30,2011-06-30,Literature (Diebold-Yilmaz 2014); Note: 49 rolling TCI obs pre-shock
+Taper Tantrum,2013-05-22,2013-05-22,2013-09-30,2013-01-02,2013-05-21,"Bernanke testimony, May 2013"
 China Stock Market Crash,2015-06-12,2015-06-12,2016-02-29,2014-12-01,2015-06-11,SSE Composite crash
 US-China Trade War Escalation,2018-03-22,2018-03-22,2018-12-31,2017-09-01,2018-03-21,Trump tariff announcement
 COVID-19 Pandemic,2020-01-30,2020-01-30,2020-06-30,2019-07-01,2020-01-29,WHO PHEIC declaration
-Russia-Ukraine War,2022-02-24,2022-02-24,2022-06-30,2021-09-01,2022-02-23,Russian invasion of Ukraine
-Global Monetary Tightening 2022,2022-03-16,2022-03-16,2022-12-31,2021-09-01,2022-03-15,Fed rate hike cycle begins
+Russia-Ukraine War,2022-02-24,2022-02-24,2022-05-31,2021-09-01,2022-02-23,Russian invasion of Ukraine (non-overlapping window)
+Global Monetary Tightening 2022,2022-06-01,2022-06-01,2022-12-31,2021-09-01,2022-02-23,Fed 75bps rate hike acceleration (non-overlapping window)
 US Banking Crisis 2023,2023-03-10,2023-03-10,2023-05-31,2022-12-01,2023-03-09,SVB collapse

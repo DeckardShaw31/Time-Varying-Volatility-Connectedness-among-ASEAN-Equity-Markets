@@ -132,8 +132,13 @@ def create_intersection_dataset(df: pd.DataFrame) -> pd.DataFrame:
 def create_weekly_dataset(df: pd.DataFrame) -> pd.DataFrame:
     """
     Create weekly-aggregated dataset.
-    For each market, take the last available observation in each ISO week.
-    This reduces nonsynchronous-trading problems.
+    Aggregates daily OHLCV within each ISO week (year_week):
+      - High  = max(daily high)
+      - Low   = min(daily low)
+      - Open  = first(daily open)
+      - Close = last(daily close)
+      - Volume = sum(daily volume)
+      - Date  = last(daily date)
     """
     logger.info("Creating weekly-aggregated dataset ...")
 
@@ -141,10 +146,29 @@ def create_weekly_dataset(df: pd.DataFrame) -> pd.DataFrame:
     df["year_week"] = df["date"].dt.isocalendar().year.astype(str) + "-W" + \
                       df["date"].dt.isocalendar().week.astype(str).str.zfill(2)
 
-    # For each country-week, take the last trading day
-    weekly = df.sort_values("date").groupby(["country", "year_week"]).last().reset_index()
+    agg_dict = {
+        "date": "last",
+        "close": "last"
+    }
+    if "open" in df.columns:
+        agg_dict["open"] = "first"
+    if "high" in df.columns:
+        agg_dict["high"] = "max"
+    if "low" in df.columns:
+        agg_dict["low"] = "min"
+    if "adjusted_close" in df.columns:
+        agg_dict["adjusted_close"] = "last"
+    if "volume" in df.columns:
+        agg_dict["volume"] = "sum"
 
-    # Only keep weeks where all countries have data
+    for c in ["index_name", "ticker", "currency", "source"]:
+        if c in df.columns:
+            agg_dict[c] = "first"
+
+    # Aggregation by country and year_week
+    weekly = df.sort_values("date").groupby(["country", "year_week"]).agg(agg_dict).reset_index()
+
+    # Only keep weeks where all 6 countries have data
     week_counts = weekly.groupby("year_week")["country"].nunique()
     full_weeks = week_counts[week_counts == len(config.COUNTRY_ORDER)].index
     weekly = weekly[weekly["year_week"].isin(full_weeks)].copy()

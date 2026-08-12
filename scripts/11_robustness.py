@@ -155,19 +155,18 @@ def plot_robustness_comparison(summary: pd.DataFrame):
     plt.close(fig)
 
 
-def run_dcc_garch(panel: pd.DataFrame, label: str) -> dict:
+def run_garch_filtered_ewma_correlations(panel: pd.DataFrame, label: str) -> dict:
     """
-    Estimate DCC-GARCH conditional correlations (if arch package available).
-    This is a simplified implementation for robustness.
+    Estimate GARCH-filtered EWMA conditional correlations (GARCH(1,1) standardized residuals + EWMA smoothing).
+    This is an honest, non-parametric alternative to multivariate DCC-GARCH.
     """
     try:
         from arch import arch_model
-        from arch.univariate import ConstantMean, GARCH
     except ImportError:
-        logger.info("  arch package not available - skipping DCC-GARCH")
+        logger.info("  arch package not available - skipping GARCH-filtered EWMA correlations")
         return {}
 
-    logger.info(f"  DCC-GARCH estimation ({label}) ...")
+    logger.info(f"  GARCH-filtered EWMA conditional correlations estimation ({label}) ...")
 
     # Step 1: Fit univariate GARCH(1,1) for each series
     std_residuals = {}
@@ -175,7 +174,7 @@ def run_dcc_garch(panel: pd.DataFrame, label: str) -> dict:
 
     for col in panel.columns:
         try:
-            am = arch_model(panel[col].dropna() * 100,  # scale for numerical stability
+            am = arch_model(panel[col].dropna() * 100,
                            vol="Garch", p=1, q=1, mean="Constant",
                            rescale=True)
             res = am.fit(disp="off")
@@ -189,14 +188,12 @@ def run_dcc_garch(panel: pd.DataFrame, label: str) -> dict:
     if len(std_residuals) < 2:
         return {}
 
-    # Step 2: Compute time-varying correlations using exponential smoothing
-    # (Simplified DCC - full DCC requires iterative MLE)
+    # Step 2: EWMA conditional correlations on standardized residuals
     std_df = pd.DataFrame(std_residuals).dropna()
     n = len(std_df)
     K = len(std_df.columns)
 
-    # Exponential smoothing parameter
-    lam = 0.94  # RiskMetrics-style decay
+    lam = 0.94  # EWMA decay factor
 
     corr_series = {}
     countries = list(std_df.columns)
@@ -207,7 +204,6 @@ def run_dcc_garch(panel: pd.DataFrame, label: str) -> dict:
             z1 = std_df[c1].values
             z2 = std_df[c2].values
 
-            # EWMA covariance
             cov_t = np.zeros(n)
             cov_t[0] = z1[0] * z2[0]
             var1_t = np.zeros(n)
@@ -224,9 +220,9 @@ def run_dcc_garch(panel: pd.DataFrame, label: str) -> dict:
             corr_series[f"{c1}_{c2}"] = corr_t
 
     corr_df = pd.DataFrame(corr_series, index=std_df.index)
-    out_path = config.OUT_RESULTS / f"dcc_garch_correlations_{label}.csv"
+    out_path = config.OUT_RESULTS / f"garch_ewma_correlations_{label}.csv"
     corr_df.to_csv(out_path)
-    logger.info(f"  Saved DCC-GARCH correlations -> {out_path}")
+    logger.info(f"  Saved GARCH-filtered EWMA correlations -> {out_path}")
 
     return {"correlations": corr_df, "cond_vols": cond_vols}
 
@@ -236,24 +232,23 @@ def main():
     logger.info("Stage 11: Robustness checks")
     logger.info("=" * 60)
 
-    # Collect all available panels
+    # Collect all available panels across volatility measures and frequencies
     panels = {}
 
-    for measure in ["vol_parkinson", "vol_squared"]:
-        for sync in ["intersection"]:
+    for measure in ["vol_parkinson", "vol_squared", "vol_absolute"]:
+        for sync in ["intersection", "weekly"]:
             fname = f"panel_{measure}_{sync}.csv"
             path = config.DATA_PROC / fname
             if path.exists():
                 panel = pd.read_csv(path, index_col=0, parse_dates=True)
                 panels[(measure, sync)] = panel
-                logger.info(f"  Loaded: {fname} ({len(panel)} obs)")
+                logger.info(f"  Loaded panel: {fname} ({len(panel)} obs)")
 
     if not panels:
         logger.error("  No volatility panels found. Run Stages 4-6 first.")
         sys.exit(1)
 
-    # Run robustness grid
-    logger.info(f"\nRobustness grid:")
+    logger.info(f"\nRobustness grid execution:")
     logger.info(f"  Windows:  {config.ROBUSTNESS_WINDOWS}")
     logger.info(f"  Horizons: {config.ROBUSTNESS_HORIZONS}")
     logger.info(f"  Panels:   {list(panels.keys())}")
@@ -274,13 +269,14 @@ def main():
 
         plot_robustness_comparison(summary)
 
-    # DCC-GARCH (using baseline panel)
+    # GARCH-filtered EWMA conditional correlations (baseline panel)
     baseline_key = ("vol_parkinson", "intersection")
     if baseline_key not in panels:
         baseline_key = next(iter(panels.keys()))
 
-    dcc_result = run_dcc_garch(panels[baseline_key],
-                                f"{baseline_key[0]}_{baseline_key[1]}")
+    run_garch_filtered_ewma_correlations(
+        panels[baseline_key], f"{baseline_key[0]}_{baseline_key[1]}"
+    )
 
     logger.info(f"\n{'-' * 60}")
     logger.info("Stage 11 complete.")

@@ -110,6 +110,11 @@ def compute_global_returns(global_df: pd.DataFrame) -> pd.DataFrame:
             valid = result[f"d_{col}"].notna().sum()
             logger.info(f"  Δ({col}): {valid} observations (basis points)")
 
+    # Preserve GPR index columns directly
+    for col in ["GPR", "GPRD", "GPRD_ACT", "GPRD_THREAT"]:
+        if col in global_df.columns and col not in result.columns:
+            result[col] = global_df[col]
+
     return result
 
 
