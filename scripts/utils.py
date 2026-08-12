@@ -31,11 +31,12 @@ def setup_logger(name: str, level=logging.INFO) -> logging.Logger:
     """Create a console logger with a standard format."""
     logger = logging.getLogger(name)
     if not logger.handlers:
-        # Use UTF-8 wrapped stdout to avoid cp1252 errors on Windows
-        import io
-        stream = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8",
-                                   errors="replace", line_buffering=True)
-        handler = logging.StreamHandler(stream)
+        if hasattr(sys.stdout, "reconfigure"):
+            try:
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+        handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(
             logging.Formatter("[%(asctime)s] %(name)s - %(levelname)s - %(message)s",
                               datefmt="%Y-%m-%d %H:%M:%S")
