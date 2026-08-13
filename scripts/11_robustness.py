@@ -114,52 +114,63 @@ def run_robustness_grid(panels: dict, windows: list, horizons: list,
 
 
 def plot_robustness_comparison(summary: pd.DataFrame):
-    """Plot comparison of TCI statistics across robustness specifications."""
+    """Plot comparison of TCI statistics across robustness specifications cleanly without text/legend overlap."""
     setup_plot_style()
 
     if summary.empty:
         return
 
-    # Group by window size
     fig, axes = plt.subplots(1, 3, figsize=(16, 5))
 
-    # 1. TCI mean by window size
-    ax = axes[0]
-    for horizon in summary["horizon"].unique():
-        sub = summary[summary["horizon"] == horizon]
-        for measure in sub["measure"].unique():
-            msub = sub[sub["measure"] == measure]
-            ax.plot(msub["window"], msub["tci_mean"],
-                    marker="o", label=f"H={horizon}, {measure}")
-    ax.set_xlabel("Window Size")
-    ax.set_ylabel("Mean TCI (%)")
-    ax.set_title("Mean TCI by Window Size")
-    ax.legend(fontsize=8)
+    measures = ["vol_parkinson", "vol_squared", "vol_squared_usd", "vol_absolute", "vol_absolute_usd"]
+    m_labels = ["Parkinson", "Squared", "Squared USD", "Absolute", "Absolute USD"]
 
-    # 2. TCI mean by horizon
-    ax = axes[1]
-    for window in summary["window"].unique():
-        sub = summary[summary["window"] == window]
-        for measure in sub["measure"].unique():
-            msub = sub[sub["measure"] == measure]
-            ax.plot(msub["horizon"], msub["tci_mean"],
-                    marker="s", label=f"W={window}, {measure}")
-    ax.set_xlabel("Forecast Horizon")
-    ax.set_ylabel("Mean TCI (%)")
-    ax.set_title("Mean TCI by Forecast Horizon")
-    ax.legend(fontsize=8)
+    # Filter to available measures
+    avail_measures = [m for m in measures if m in summary["measure"].unique()]
+    avail_labels = [m_labels[measures.index(m)] for m in avail_measures]
 
-    # 3. TCI range comparison
-    ax = axes[2]
-    x = range(len(summary))
-    labels_short = [f"{r['measure'][:3]}\nW{r['window']}\nH{r['horizon']}"
-                    for _, r in summary.iterrows()]
-    ax.bar(x, summary["tci_mean"], yerr=summary["tci_std"],
-           capsize=3, alpha=0.7, color="steelblue")
-    ax.set_xticks(list(x))
-    ax.set_xticklabels(labels_short, fontsize=7, rotation=45)
-    ax.set_ylabel("Mean TCI (%)")
-    ax.set_title("TCI Across Specifications")
+    # 1. Bar plot by measure & frequency
+    ax1 = axes[0]
+    x = np.arange(len(avail_measures))
+    width = 0.35
+
+    d_means = [summary[(summary["measure"] == m) & (summary["sync"] == "intersection")]["tci_mean"].mean() for m in avail_measures]
+    d_stds = [summary[(summary["measure"] == m) & (summary["sync"] == "intersection")]["tci_mean"].std() for m in avail_measures]
+    w_means = [summary[(summary["measure"] == m) & (summary["sync"] == "weekly")]["tci_mean"].mean() for m in avail_measures]
+    w_stds = [summary[(summary["measure"] == m) & (summary["sync"] == "weekly")]["tci_mean"].std() for m in avail_measures]
+
+    ax1.bar(x - width / 2, d_means, width, yerr=d_stds, label="Daily", capsize=3, color="#1f77b4", alpha=0.85)
+    ax1.bar(x + width / 2, w_means, width, yerr=w_stds, label="Weekly", capsize=3, color="#ff7f0e", alpha=0.85)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(avail_labels, rotation=25, ha="right")
+    ax1.set_ylabel("Mean TCI (%)")
+    ax1.set_title("Mean TCI by Proxy & Frequency")
+    ax1.legend(loc="upper right")
+
+    # 2. Window size sensitivity (Daily)
+    ax2 = axes[1]
+    d_sub = summary[summary["sync"] == "intersection"]
+    for m, m_lbl in zip(avail_measures, avail_labels):
+        w_sub = d_sub[d_sub["measure"] == m].groupby("window")["tci_mean"].mean()
+        if not w_sub.empty:
+            ax2.plot(w_sub.index, w_sub.values, marker="o", label=m_lbl)
+    ax2.set_xlabel("Window Size (Trading Days)")
+    ax2.set_ylabel("Mean TCI (%)")
+    ax2.set_title("Window Size Sensitivity (Daily)")
+    ax2.set_xticks([200, 250, 300])
+    ax2.legend(fontsize=8, loc="best")
+
+    # 3. Forecast Horizon sensitivity (Daily)
+    ax3 = axes[2]
+    for m, m_lbl in zip(avail_measures, avail_labels):
+        h_sub = d_sub[d_sub["measure"] == m].groupby("horizon")["tci_mean"].mean()
+        if not h_sub.empty:
+            ax3.plot(h_sub.index, h_sub.values, marker="s", label=m_lbl)
+    ax3.set_xlabel("Forecast Horizon (Days)")
+    ax3.set_ylabel("Mean TCI (%)")
+    ax3.set_title("Forecast Horizon Sensitivity (Daily)")
+    ax3.set_xticks([5, 10, 20])
+    ax3.legend(fontsize=8, loc="best")
 
     plt.tight_layout()
     save_figure(fig, "robustness_comparison")
