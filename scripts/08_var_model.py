@@ -126,10 +126,13 @@ def estimate_full_sample_var(panel: pd.DataFrame, ic: str = "bic",
 
     # Lag selection
     lag_orders = select_and_report_lag(model, max_lag)
-    selected = lag_orders.get(ic, 1)
-    if selected == 0:
+    raw_selected = lag_orders.get(ic, 1)
+    if raw_selected == 0:
         selected = 1
-    logger.info(f"  Using {ic.upper()} -> lag {selected}")
+        logger.info(f"  {ic.upper()} selected raw lag 0; enforced minimum lag {selected} used for VAR estimation.")
+    else:
+        selected = raw_selected
+        logger.info(f"  Using {ic.upper()} -> lag {selected}")
 
     # Estimate
     result = model.fit(selected)

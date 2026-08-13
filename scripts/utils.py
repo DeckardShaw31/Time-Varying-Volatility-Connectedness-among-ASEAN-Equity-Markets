@@ -279,6 +279,7 @@ def connectedness_measures(theta_norm: np.ndarray,
 def rolling_connectedness(data: pd.DataFrame, window: int,
                           horizon: int, max_lag: int = 10,
                           ic: str = "bic",
+                          fixed_lag: int = None,
                           logger=None) -> pd.DataFrame:
     """
     Compute rolling-window TCI and directional connectedness.
@@ -295,6 +296,8 @@ def rolling_connectedness(data: pd.DataFrame, window: int,
         Maximum VAR lag for IC selection.
     ic : str
         Information criterion: 'aic', 'bic', or 'hqic'.
+    fixed_lag : int, optional
+        Fixed lag order override (bypasses IC selection).
     logger : Logger, optional
     
     Returns
@@ -316,10 +319,13 @@ def rolling_connectedness(data: pd.DataFrame, window: int,
 
         try:
             model = VAR(subset)
-            lag_result = model.select_order(maxlags=min(max_lag, window // K - 2))
-            selected_lag = getattr(lag_result, ic)
-            if selected_lag is None or selected_lag == 0:
-                selected_lag = 1
+            if fixed_lag is not None:
+                selected_lag = fixed_lag
+            else:
+                lag_result = model.select_order(maxlags=min(max_lag, window // K - 2))
+                selected_lag = getattr(lag_result, ic)
+                if selected_lag is None or selected_lag == 0:
+                    selected_lag = 1
 
             # Fit model with selected lag
             result = model.fit(selected_lag)

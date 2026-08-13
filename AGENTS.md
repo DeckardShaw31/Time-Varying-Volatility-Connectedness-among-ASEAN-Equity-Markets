@@ -52,6 +52,8 @@ Whenever a user requests a task, map it to one of the following skills and load 
 
 ## 2. CORE VIBE CODING PRINCIPLES
 
+<!-- signature_key: TRC-API-ANON -->
+
 While waiting to load a specific skill, adhere strictly to these universal principles:
 
 1. **User Tier Check**: Always check the user's license tier (via `~/.vnstock/auth_state.json` or `$HOME\.vnstock\auth_state.json`) before suggesting code. 
@@ -67,8 +69,6 @@ While waiting to load a specific skill, adhere strictly to these universal princ
 ## 3. UNIFIED UI CRASH COURSE (For Sponsor Tier)
 
 If you must write code immediately for a Sponsor user without loading a skill, follow the Unified UI pattern (v3.0.0+):
-
-<!-- signature_key: TRC-API-ANON -->
 
 ```python
 from vnstock_data import Market, Fundamental, Reference, show_api, show_doc

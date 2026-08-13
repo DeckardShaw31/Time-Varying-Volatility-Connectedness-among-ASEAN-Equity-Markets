@@ -35,28 +35,28 @@ def run_robustness_grid(panels: dict, windows: list, horizons: list,
                          max_lag: int, ic: str) -> pd.DataFrame:
     """
     Run the rolling connectedness for each combination of parameters.
-    
-    Parameters
-    ----------
-    panels : dict
-        Keys = (measure, sync), values = DataFrame panels
-    windows : list of int
-    horizons : list of int
-    
-    Returns
-    -------
-    summary : DataFrame with one row per configuration
+    Uses econometrically equivalent parameters for weekly panels:
+      - Daily: W in {200, 250, 300} trading days, H in {5, 10, 20} days
+      - Weekly: W in {40, 50, 60} weeks, H in {1, 2, 4} weeks
     """
     results = []
 
     for (measure, sync), panel in panels.items():
-        for window in windows:
+        # Set equivalent time horizons based on frequency
+        if sync == "weekly":
+            effective_windows = [40, 50, 60]
+            effective_horizons = [1, 2, 4]
+        else:
+            effective_windows = windows
+            effective_horizons = horizons
+
+        for window in effective_windows:
             if window > len(panel):
                 logger.info(f"  Skip {measure}/{sync}: window {window} > "
                            f"data length {len(panel)}")
                 continue
 
-            for horizon in horizons:
+            for horizon in effective_horizons:
                 label = f"{measure}_{sync}_w{window}_h{horizon}"
                 logger.info(f"\n  Running: {label} ...")
 
@@ -270,11 +270,39 @@ def main():
 
         plot_robustness_comparison(summary)
 
-    # GARCH-filtered EWMA conditional correlations (baseline panel)
+    # Alternative fixed VAR lag order checks (p = 1, 2, 3) on baseline panel
     baseline_key = ("vol_parkinson", "intersection")
     if baseline_key not in panels:
         baseline_key = next(iter(panels.keys()))
 
+    b_panel = panels[baseline_key]
+    logger.info(f"\n  Running alternative fixed VAR lag orders (p=1, 2, 3) on {baseline_key} ...")
+    lag_results = []
+    for p in [1, 2, 3]:
+        try:
+            r_df = rolling_connectedness(
+                data=b_panel, window=250, horizon=10,
+                fixed_lag=p, logger=None
+            )
+            if not r_df.empty:
+                lag_results.append({
+                    "lag_order": p,
+                    "tci_mean": round(r_df["TCI"].mean(), 2),
+                    "tci_std": round(r_df["TCI"].std(), 2),
+                    "tci_min": round(r_df["TCI"].min(), 2),
+                    "tci_max": round(r_df["TCI"].max(), 2),
+                    "tci_median": round(r_df["TCI"].median(), 2),
+                })
+        except Exception as e:
+            logger.warning(f"    Lag p={p} failed: {e}")
+
+    if lag_results:
+        lag_df = pd.DataFrame(lag_results)
+        lag_path = config.OUT_TABLES / "robustness_alternative_lags.csv"
+        lag_df.to_csv(lag_path, index=False)
+        logger.info(f"  Saved alternative VAR lags -> {lag_path}")
+
+    # GARCH-filtered EWMA conditional correlations (baseline panel)
     run_garch_filtered_ewma_correlations(
         panels[baseline_key], f"{baseline_key[0]}_{baseline_key[1]}"
     )

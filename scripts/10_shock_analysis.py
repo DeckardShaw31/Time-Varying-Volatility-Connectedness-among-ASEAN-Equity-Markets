@@ -124,16 +124,16 @@ def moving_block_bootstrap_mean_diff(shock_vals: np.ndarray, tranquil_vals: np.n
                                      block_sizes: list = [20, 60, 120], n_boot: int = 5000, ci: float = 0.95) -> dict:
     """
     Moving-block bootstrap confidence intervals for difference in means (mean_shock - mean_tranquil).
-    Tests across multiple block sizes (B=20, B=60, B=120) to accommodate 250-day estimator persistence.
+    Only evaluates feasible block sizes (B <= min(n_shock, n_tranquil)/2).
+    Infeasible block sizes are skipped to avoid silent fallback to i.i.d. sampling.
     """
     observed_diff = shock_vals.mean() - tranquil_vals.mean()
     n_shock = len(shock_vals)
     n_tranquil = len(tranquil_vals)
+    min_len = min(n_shock, n_tranquil)
 
     def draw_mbb_sample(arr: np.ndarray, target_len: int, b_size: int, rng: np.random.Generator) -> np.ndarray:
         n = len(arr)
-        if n <= b_size:
-            return rng.choice(arr, size=target_len, replace=True)
         n_blocks_needed = int(np.ceil(target_len / b_size))
         starts = rng.integers(0, n - b_size + 1, size=n_blocks_needed)
         sample_blocks = [arr[s:s + b_size] for s in starts]
@@ -142,7 +142,19 @@ def moving_block_bootstrap_mean_diff(shock_vals: np.ndarray, tranquil_vals: np.n
     results_by_block = {}
     rng = np.random.default_rng(42)
 
+    feasible_blocks = []
     for b_size in block_sizes:
+        if b_size > min_len // 2:
+            results_by_block[f"B{b_size}"] = {
+                "ci_lower": np.nan,
+                "ci_upper": np.nan,
+                "p_value": np.nan,
+                "significant": False,
+                "feasible": False,
+            }
+            continue
+
+        feasible_blocks.append(b_size)
         boot_diffs = np.empty(n_boot)
         for b in range(n_boot):
             b_shock = draw_mbb_sample(shock_vals, n_shock, b_size, rng)
@@ -158,18 +170,34 @@ def moving_block_bootstrap_mean_diff(shock_vals: np.ndarray, tranquil_vals: np.n
             "ci_upper": ci_upper,
             "p_value": p_val,
             "significant": (ci_lower > 0) if observed_diff > 0 else (ci_upper < 0),
+            "feasible": True,
         }
 
-    b20 = results_by_block["B20"]
-    b60 = results_by_block["B60"]
+    # Primary feasible block size (prefer B20, or smallest feasible)
+    primary_b = feasible_blocks[0] if feasible_blocks else None
+    if primary_b is not None:
+        p_res = results_by_block[f"B{primary_b}"]
+        ci_lower_p = p_res["ci_lower"]
+        ci_upper_p = p_res["ci_upper"]
+        p_val_p = p_res["p_value"]
+        is_sig = p_res["significant"]
+    else:
+        ci_lower_p = ci_upper_p = p_val_p = np.nan
+        is_sig = False
+
+    b60_res = results_by_block.get("B60", {})
+    ci_lower_b60 = b60_res.get("ci_lower", np.nan)
+    ci_upper_b60 = b60_res.get("ci_upper", np.nan)
+
     return {
         "observed_diff": observed_diff,
-        "ci_lower_b20": b20["ci_lower"],
-        "ci_upper_b20": b20["ci_upper"],
-        "ci_lower_b60": b60["ci_lower"],
-        "ci_upper_b60": b60["ci_upper"],
-        "p_value": b20["p_value"],
-        "significant": b20["significant"] and b60["significant"],
+        "ci_lower_primary": ci_lower_p,
+        "ci_upper_primary": ci_upper_p,
+        "ci_lower_b60": ci_lower_b60,
+        "ci_upper_b60": ci_upper_b60,
+        "p_value": p_val_p,
+        "significant": is_sig,
+        "primary_b": primary_b,
     }
 
 
@@ -204,6 +232,9 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
 
         boot = moving_block_bootstrap_mean_diff(shock_vals, tranquil_vals)
 
+        ci_b20_str = f"[{boot['ci_lower_primary']:.2f}, {boot['ci_upper_primary']:.2f}]" if not np.isnan(boot['ci_lower_primary']) else "N/A"
+        ci_b60_str = f"[{boot['ci_lower_b60']:.2f}, {boot['ci_upper_b60']:.2f}]" if not np.isnan(boot['ci_lower_b60']) else "Infeasible"
+
         result = {
             "event_name": name,
             "shock_n": len(shock_vals),
@@ -212,9 +243,9 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
             "tranquil_mean_tci": round(tranquil_mean, 2),
             "diff_mean": round(diff_mean, 2),
             "diff_median": round(diff_median, 2),
-            "mbb_ci_b20": f"[{boot['ci_lower_b20']:.2f}, {boot['ci_upper_b20']:.2f}]",
-            "mbb_ci_b60": f"[{boot['ci_lower_b60']:.2f}, {boot['ci_upper_b60']:.2f}]",
-            "boot_pval": round(boot["p_value"], 4),
+            "mbb_ci_b20": ci_b20_str,
+            "mbb_ci_b60": ci_b60_str,
+            "boot_pval": round(boot["p_value"], 4) if not np.isnan(boot["p_value"]) else np.nan,
             "shock_associated_increase": "Yes" if (diff_mean > 0 and boot["significant"]) else "No",
         }
 
@@ -240,7 +271,7 @@ def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
     OLS regression of TCI on global factors with HAC standard errors.
     Constructs true monthly level differences for price/yield variables,
     and monthly averages for VIX and GPR.
-    Equation: TCI_m = α + β₁·GPR_m + β₂·VIX_m + β₃·ΔOil_m + β₄·ΔDGS2_m + β₅·ΔDollar_m + β₆·ΔSP500_m + ε_m
+    Equation: TCI_m = α + β₁·GPR_m + β₂·VIX_m + β₃·ΔOil_m + β₄·ΔDGS2_pp_m + β₅·ΔDollar_m + β₆·ΔSP500_m + ε_m
     Note: HAC (12 lags) accommodates (rather than eliminates) 250-day window overlap.
     """
     from statsmodels.regression.linear_model import OLS
@@ -297,10 +328,10 @@ def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
         m_sp = g_levels["SP500"].resample("ME").last()
         m_df["ΔSP500"] = 100 * (np.log(m_sp) - np.log(m_sp.shift(1)))
 
-    # Monthly level first difference for interest rates (DGS2)
+    # Monthly level first difference for interest rates (DGS2 in percentage points)
     if "DGS2" in g_levels.columns:
         m_dgs2 = g_levels["DGS2"].resample("ME").last()
-        m_df["ΔDGS2"] = m_dgs2 - m_dgs2.shift(1)
+        m_df["ΔDGS2_pp"] = m_dgs2 - m_dgs2.shift(1)
 
     m_df = m_df.dropna()
     logger.info(f"  Monthly regression observations: {len(m_df)} months")
@@ -335,7 +366,9 @@ def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
 
     out_table = config.OUT_TABLES / "hac_regression_coefficients.csv"
     coef_table.to_csv(out_table)
-    logger.info(f"  Saved HAC regression table -> {out_table}")
+    deliv_table = config.DELIVERABLES / "hac_regression_coefficients.csv"
+    coef_table.to_csv(deliv_table)
+    logger.info(f"  Saved HAC regression table -> {out_table} and {deliv_table}")
 
     return {
         "result": result,
