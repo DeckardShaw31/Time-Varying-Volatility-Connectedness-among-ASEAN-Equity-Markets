@@ -25,7 +25,7 @@ for d in [DATA_RAW, DATA_CLEANED, DATA_PROC, OUT_TABLES, OUT_FIGURES,
 
 # Effective end date (dictated by available Philippines/Thailand market data)
 START_DATE = "2010-01-01"
-END_DATE   = "2026-07-17"
+END_DATE   = "2026-07-18"
 
 def find_file(*filenames) -> Path:
     """Helper to locate raw files in PROJECT_ROOT or DATA_RAW."""
@@ -113,8 +113,8 @@ FRED_SERIES = {
     "SP500":      "SP500",
 }
 
-# FRED API key – set via environment variable or paste here
-FRED_API_KEY = os.environ.get("FRED_API_KEY", "08ce1cf593e4915bbb3e88c10d8a9038")
+# FRED API key – set via environment variable
+FRED_API_KEY = os.environ.get("FRED_API_KEY", "")
 
 # ----------------------------------------------
 # GPR / EPU file paths (manual downloads)

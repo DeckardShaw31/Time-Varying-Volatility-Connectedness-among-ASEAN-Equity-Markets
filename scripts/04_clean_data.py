@@ -168,6 +168,10 @@ def create_weekly_dataset(df: pd.DataFrame) -> pd.DataFrame:
     # Aggregation by country and year_week
     weekly = df.sort_values("date").groupby(["country", "year_week"]).agg(agg_dict).reset_index()
 
+    # Assign canonical Friday date for exact weekly panel alignment across markets
+    yw_str = weekly["year_week"] + "-5"
+    weekly["date"] = pd.to_datetime(yw_str, format="%G-W%V-%u")
+
     # Only keep weeks where all 6 countries have data
     week_counts = weekly.groupby("year_week")["country"].nunique()
     full_weeks = week_counts[week_counts == len(config.COUNTRY_ORDER)].index

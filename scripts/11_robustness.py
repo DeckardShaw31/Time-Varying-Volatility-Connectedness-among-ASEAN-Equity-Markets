@@ -232,10 +232,11 @@ def main():
     logger.info("Stage 11: Robustness checks")
     logger.info("=" * 60)
 
-    # Collect all available panels across volatility measures and frequencies
+    # Collect all available panels across volatility measures, currencies, and frequencies
     panels = {}
 
-    for measure in ["vol_parkinson", "vol_squared", "vol_absolute"]:
+    measures = ["vol_parkinson", "vol_squared", "vol_squared_usd", "vol_absolute", "vol_absolute_usd"]
+    for measure in measures:
         for sync in ["intersection", "weekly"]:
             fname = f"panel_{measure}_{sync}.csv"
             path = config.DATA_PROC / fname

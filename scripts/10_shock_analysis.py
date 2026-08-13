@@ -121,10 +121,10 @@ def create_event_windows() -> pd.DataFrame:
 
 
 def moving_block_bootstrap_mean_diff(shock_vals: np.ndarray, tranquil_vals: np.ndarray,
-                                     block_size: int = 20, n_boot: int = 5000, ci: float = 0.95) -> dict:
+                                     block_sizes: list = [20, 60, 120], n_boot: int = 5000, ci: float = 0.95) -> dict:
     """
-    Moving-block bootstrap confidence interval for difference in means (mean_shock - mean_tranquil).
-    Accurately preserves time-series dependence within event windows.
+    Moving-block bootstrap confidence intervals for difference in means (mean_shock - mean_tranquil).
+    Tests across multiple block sizes (B=20, B=60, B=120) to accommodate 250-day estimator persistence.
     """
     observed_diff = shock_vals.mean() - tranquil_vals.mean()
     n_shock = len(shock_vals)
@@ -139,34 +139,46 @@ def moving_block_bootstrap_mean_diff(shock_vals: np.ndarray, tranquil_vals: np.n
         sample_blocks = [arr[s:s + b_size] for s in starts]
         return np.concatenate(sample_blocks)[:target_len]
 
-    boot_diffs = np.empty(n_boot)
+    results_by_block = {}
     rng = np.random.default_rng(42)
 
-    for b in range(n_boot):
-        b_shock = draw_mbb_sample(shock_vals, n_shock, block_size, rng)
-        b_tranquil = draw_mbb_sample(tranquil_vals, n_tranquil, block_size, rng)
-        boot_diffs[b] = b_shock.mean() - b_tranquil.mean()
+    for b_size in block_sizes:
+        boot_diffs = np.empty(n_boot)
+        for b in range(n_boot):
+            b_shock = draw_mbb_sample(shock_vals, n_shock, b_size, rng)
+            b_tranquil = draw_mbb_sample(tranquil_vals, n_tranquil, b_size, rng)
+            boot_diffs[b] = b_shock.mean() - b_tranquil.mean()
 
-    alpha = (1 - ci) / 2
-    ci_lower = np.percentile(boot_diffs, alpha * 100)
-    ci_upper = np.percentile(boot_diffs, (1 - alpha) * 100)
-    p_value = np.mean(boot_diffs <= 0) if observed_diff > 0 else np.mean(boot_diffs >= 0)
+        alpha = (1 - ci) / 2
+        ci_lower = np.percentile(boot_diffs, alpha * 100)
+        ci_upper = np.percentile(boot_diffs, (1 - alpha) * 100)
+        p_val = np.mean(boot_diffs <= 0) if observed_diff > 0 else np.mean(boot_diffs >= 0)
+        results_by_block[f"B{b_size}"] = {
+            "ci_lower": ci_lower,
+            "ci_upper": ci_upper,
+            "p_value": p_val,
+            "significant": (ci_lower > 0) if observed_diff > 0 else (ci_upper < 0),
+        }
 
+    b20 = results_by_block["B20"]
+    b60 = results_by_block["B60"]
     return {
         "observed_diff": observed_diff,
-        "ci_lower": ci_lower,
-        "ci_upper": ci_upper,
-        "p_value": p_value,
-        "significant": (ci_lower > 0) if observed_diff > 0 else (ci_upper < 0),
+        "ci_lower_b20": b20["ci_lower"],
+        "ci_upper_b20": b20["ci_upper"],
+        "ci_lower_b60": b60["ci_lower"],
+        "ci_upper_b60": b60["ci_upper"],
+        "p_value": b20["p_value"],
+        "significant": b20["significant"] and b60["significant"],
     }
 
 
 def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
                     net_df: pd.DataFrame = None) -> pd.DataFrame:
     """
-    For each event, compare TCI during shock vs. tranquil periods using Moving-Block Bootstrap.
+    For each event, evaluate shock-associated shifts in TCI using Moving-Block Bootstrap.
     """
-    logger.info("Event-window analysis with Moving-Block Bootstrap ...")
+    logger.info("Event-window analysis with Multi-Block Moving-Block Bootstrap ...")
 
     results = []
     for _, event in events_df.iterrows():
@@ -190,7 +202,6 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
         diff_mean = shock_mean - tranquil_mean
         diff_median = np.median(shock_vals) - np.median(tranquil_vals)
 
-        t_stat, t_pval = stats.ttest_ind(shock_vals, tranquil_vals)
         boot = moving_block_bootstrap_mean_diff(shock_vals, tranquil_vals)
 
         result = {
@@ -201,12 +212,10 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
             "tranquil_mean_tci": round(tranquil_mean, 2),
             "diff_mean": round(diff_mean, 2),
             "diff_median": round(diff_median, 2),
-            "t_stat": round(t_stat, 3),
-            "t_pval": round(t_pval, 4),
-            "boot_ci_lower": round(boot["ci_lower"], 2),
-            "boot_ci_upper": round(boot["ci_upper"], 2),
+            "mbb_ci_b20": f"[{boot['ci_lower_b20']:.2f}, {boot['ci_upper_b20']:.2f}]",
+            "mbb_ci_b60": f"[{boot['ci_lower_b60']:.2f}, {boot['ci_upper_b60']:.2f}]",
             "boot_pval": round(boot["p_value"], 4),
-            "contagion": "Yes" if (diff_mean > 0 and boot["significant"]) else "No",
+            "shock_associated_increase": "Yes" if (diff_mean > 0 and boot["significant"]) else "No",
         }
 
         if net_df is not None:
@@ -219,9 +228,9 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
                         net_shock - net_tranquil, 2)
 
         results.append(result)
-        sign = "↑ CONTAGION" if result["contagion"] == "Yes" else "-"
+        sign = "↑ SHOCK INCREASE" if result["shock_associated_increase"] == "Yes" else "-"
         logger.info(f"  {name}: Δ TCI = {diff_mean:+.2f}% "
-                    f"CI=[{boot['ci_lower']:.2f}, {boot['ci_upper']:.2f}] {sign}")
+                    f"B20 CI={result['mbb_ci_b20']} B60 CI={result['mbb_ci_b60']} {sign}")
 
     return pd.DataFrame(results)
 
@@ -229,62 +238,88 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
 def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
     """
     OLS regression of TCI on global factors with HAC standard errors.
-    Subsamples month-end observations to eliminate 249-day rolling-window dependence.
-    Equation: TCI_t = α + β₁·GPR_t + β₂·VIX_t + β₃·ΔOil_t + β₄·ΔDGS2_t + β₅·ΔDollar_t + ε_t
+    Constructs true monthly level differences for price/yield variables,
+    and monthly averages for VIX and GPR.
+    Equation: TCI_m = α + β₁·GPR_m + β₂·VIX_m + β₃·ΔOil_m + β₄·ΔDGS2_m + β₅·ΔDollar_m + β₆·ΔSP500_m + ε_m
+    Note: HAC (12 lags) accommodates (rather than eliminates) 250-day window overlap.
     """
     from statsmodels.regression.linear_model import OLS
     from statsmodels.tools import add_constant
 
-    logger.info("HAC regression (month-end subsampled): TCI ~ global factors ...")
+    logger.info("HAC regression (monthly level differences): TCI ~ global factors ...")
 
-    merged = pd.DataFrame({"TCI": tci_series})
+    # 1. Month-end TCI level
+    m_tci = tci_series.resample("ME").last().dropna()
+    m_df = pd.DataFrame({"TCI": m_tci})
 
-    # Add global factors
-    for src_col, label in [("VIX", "VIX"), ("d_Brent", "ΔOil"), ("d_DGS2", "ΔDGS2"),
-                           ("d_DollarIdx", "ΔDollar"), ("d_SP500", "ΔSP500")]:
-        if src_col in global_df.columns:
-            merged[label] = global_df[src_col]
+    # 2. Daily global levels to monthly levels / means
+    g_levels = global_df.copy()
+    if not isinstance(g_levels.index, pd.DatetimeIndex):
+        g_levels.index = pd.to_datetime(g_levels.index)
 
-    # Search for GPR in global_df or raw files
-    gpr_found = False
-    for col in ["GPRD", "GPR", "GPRD_ACT", "GPRD_THREAT", "gpr"]:
-        if col in global_df.columns:
-            merged["GPR"] = global_df[col]
-            gpr_found = True
+    # Convert all numeric columns safely
+    for col in g_levels.columns:
+        g_levels[col] = pd.to_numeric(g_levels[col], errors="coerce")
+
+    # Monthly means for VIX
+    if "VIX" in g_levels.columns:
+        m_df["VIX"] = g_levels["VIX"].resample("ME").mean()
+
+    # Monthly means for GPR
+    for c in ["GPRD", "GPR", "GPRD_ACT", "GPRD_THREAT"]:
+        if c in g_levels.columns:
+            m_df["GPR"] = g_levels[c].resample("ME").mean()
             break
 
-    if not gpr_found:
-        gpr_path = config.find_file("gpr_daily.csv", "data_gpr_daily(till_aug_10).csv", "global_daily_raw.csv")
+    if "GPR" not in m_df.columns:
+        gpr_path = config.find_file("gpr_daily.csv", "data_gpr_daily(till_aug_10).csv")
         if gpr_path.exists():
             try:
                 gpr_raw = pd.read_csv(gpr_path)
                 if "DAY" in gpr_raw.columns and "GPRD" in gpr_raw.columns:
                     gpr_raw["date"] = pd.to_datetime(gpr_raw["DAY"].astype(str), format="%Y%m%d", errors="coerce")
                     gpr_raw = gpr_raw.set_index("date")
-                    merged["GPR"] = gpr_raw["GPRD"]
+                    gpr_raw["GPRD"] = pd.to_numeric(gpr_raw["GPRD"], errors="coerce")
+                    m_df["GPR"] = gpr_raw["GPRD"].resample("ME").mean()
             except Exception:
                 pass
 
-    merged = merged.dropna()
+    # Monthly level log differences for Brent oil, DollarIdx, SP500
+    if "Brent" in g_levels.columns:
+        m_brent = g_levels["Brent"].resample("ME").last()
+        m_df["ΔOil"] = 100 * (np.log(m_brent) - np.log(m_brent.shift(1)))
 
-    if len(merged) < 30:
-        logger.warning(f"  Insufficient observations ({len(merged)}) for regression")
+    if "DollarIdx" in g_levels.columns:
+        m_dollar = g_levels["DollarIdx"].resample("ME").last()
+        m_df["ΔDollar"] = 100 * (np.log(m_dollar) - np.log(m_dollar.shift(1)))
+
+    if "SP500" in g_levels.columns:
+        m_sp = g_levels["SP500"].resample("ME").last()
+        m_df["ΔSP500"] = 100 * (np.log(m_sp) - np.log(m_sp.shift(1)))
+
+    # Monthly level first difference for interest rates (DGS2)
+    if "DGS2" in g_levels.columns:
+        m_dgs2 = g_levels["DGS2"].resample("ME").last()
+        m_df["ΔDGS2"] = m_dgs2 - m_dgs2.shift(1)
+
+    m_df = m_df.dropna()
+    logger.info(f"  Monthly regression observations: {len(m_df)} months")
+
+    if len(m_df) < 20:
+        logger.warning("  Insufficient observations for regression")
         return {}
 
-    # Subsample to month-end observations to eliminate rolling-window 249-day overlap
-    monthly_merged = merged.resample("ME").last().dropna()
-    logger.info(f"  Month-end subsampled observations: {len(monthly_merged)} months")
-
-    y = monthly_merged["TCI"]
-    x_cols = [c for c in monthly_merged.columns if c != "TCI"]
+    y = m_df["TCI"]
+    x_cols = [c for c in m_df.columns if c != "TCI"]
 
     if not x_cols:
         logger.warning("  No explanatory variables available for regression")
         return {}
 
-    X = add_constant(monthly_merged[x_cols])
+    X = add_constant(m_df[x_cols])
 
     # OLS with HAC (Newey-West) standard errors using 12-month maxlags
+    # Accommodates persistence and overlap in rolling TCI estimates
     nw_lags = 12
     model = OLS(y, X)
     result = model.fit(cov_type="HAC", cov_kwds={"maxlags": nw_lags})
@@ -347,8 +382,8 @@ def main():
         logger.info(f"  Saved shock analysis -> {out_path}")
 
         # Summary
-        n_contagion = (event_results["contagion"] == "Yes").sum()
-        logger.info(f"\n  Contagion detected in {n_contagion}/{len(event_results)} events")
+        n_increases = (event_results["shock_associated_increase"] == "Yes").sum()
+        logger.info(f"\n  Significant TCI increases detected in {n_increases}/{len(event_results)} events")
 
     # 4. HAC regression
     global_path = config.DATA_PROC / "global_returns.csv"

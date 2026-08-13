@@ -66,30 +66,34 @@ def compute_volatility(returns_df: pd.DataFrame,
             sub["vol_parkinson"] = np.nan
             logger.warning(f"  {country}: H/L not available, Parkinson skipped")
 
-        # 2. Squared returns
+        # 2. Squared returns (LCU and USD)
         if "return_lcu" in sub.columns:
             sub["vol_squared"] = squared_returns(sub["return_lcu"])
-        elif "return_usd" in sub.columns:
-            sub["vol_squared"] = squared_returns(sub["return_usd"])
-        else:
-            sub["vol_squared"] = np.nan
+        if "return_usd" in sub.columns:
+            sub["vol_squared_usd"] = squared_returns(sub["return_usd"])
 
-        # 3. Absolute returns
+        # 3. Absolute returns (LCU and USD)
         if "return_lcu" in sub.columns:
             sub["vol_absolute"] = absolute_returns(sub["return_lcu"])
-        elif "return_usd" in sub.columns:
-            sub["vol_absolute"] = absolute_returns(sub["return_usd"])
-        else:
-            sub["vol_absolute"] = np.nan
+        if "return_usd" in sub.columns:
+            sub["vol_absolute_usd"] = absolute_returns(sub["return_usd"])
 
         # 4. Log-transforms of all volatility proxies for VAR estimation
         if has_hl:
             sub["log_vol_parkinson"] = log_volatility(
                 sub["vol_parkinson"], config.PARKINSON_EPSILON)
-        sub["log_vol_squared"] = log_volatility(
-            sub["vol_squared"], config.PARKINSON_EPSILON)
-        sub["log_vol_absolute"] = log_volatility(
-            sub["vol_absolute"], config.PARKINSON_EPSILON)
+        if "vol_squared" in sub.columns:
+            sub["log_vol_squared"] = log_volatility(
+                sub["vol_squared"], config.PARKINSON_EPSILON)
+        if "vol_squared_usd" in sub.columns:
+            sub["log_vol_squared_usd"] = log_volatility(
+                sub["vol_squared_usd"], config.PARKINSON_EPSILON)
+        if "vol_absolute" in sub.columns:
+            sub["log_vol_absolute"] = log_volatility(
+                sub["vol_absolute"], config.PARKINSON_EPSILON)
+        if "vol_absolute_usd" in sub.columns:
+            sub["log_vol_absolute_usd"] = log_volatility(
+                sub["vol_absolute_usd"], config.PARKINSON_EPSILON)
 
         results.append(sub)
 
@@ -178,7 +182,8 @@ def main():
 
         # Build wide-format panels for VAR (intersection and weekly only)
         if label in ("intersection", "weekly"):
-            for measure in ["vol_parkinson", "vol_squared", "vol_absolute"]:
+            measures = ["vol_parkinson", "vol_squared", "vol_squared_usd", "vol_absolute", "vol_absolute_usd"]
+            for measure in measures:
                 panel = build_volatility_panel(vol, measure, label)
                 if not panel.empty:
                     panel_path = config.DATA_PROC / f"panel_{measure}_{label}.csv"
