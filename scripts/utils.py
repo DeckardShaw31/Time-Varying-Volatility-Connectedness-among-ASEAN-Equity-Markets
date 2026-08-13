@@ -381,27 +381,28 @@ def rolling_connectedness(data: pd.DataFrame, window: int,
 # ----------------------------------------------
 
 def setup_plot_style():
-    """Apply a clean publication-quality matplotlib style."""
+    """Apply a clean publication-quality matplotlib style with Times New Roman."""
     import matplotlib.pyplot as plt
     plt.rcParams.update({
-        "figure.figsize": (12, 6),
-        "figure.dpi": 150,
+        "font.family": "Times New Roman",
+        "font.size": 12,
+        "axes.titlesize": 14,
+        "axes.labelsize": 12,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+        "legend.fontsize": 10,
         "axes.grid": True,
         "grid.alpha": 0.3,
         "axes.spines.top": False,
         "axes.spines.right": False,
-        "font.size": 11,
-        "axes.titlesize": 13,
-        "axes.labelsize": 12,
     })
 
 
 def save_figure(fig, name: str, out_dir: Path = None):
-    """Save a matplotlib figure to the outputs/figures directory."""
+    """Save a matplotlib figure to the outputs/figures directory with 300 DPI."""
     if out_dir is None:
-        # Import here to avoid circular dependency
         import config
         out_dir = config.OUT_FIGURES
     filepath = out_dir / f"{name}.png"
-    fig.savefig(filepath, bbox_inches="tight", dpi=150)
+    fig.savefig(filepath, dpi=300, bbox_inches="tight", facecolor="white")
     print(f"  Saved figure -> {filepath}")

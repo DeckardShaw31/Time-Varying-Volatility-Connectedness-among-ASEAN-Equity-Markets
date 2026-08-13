@@ -119,7 +119,10 @@ def plot_return_series(returns_df: pd.DataFrame, label: str):
         ax.set_ylabel(country)
         ax.axhline(y=0, color="gray", linewidth=0.5)
 
-    axes[0].set_title(f"Daily Returns - ASEAN Markets ({label})")
+    if label == "intersection":
+        axes[0].set_title("Daily Local-Currency Equity-Index Returns")
+    else:
+        axes[0].set_title(f"Daily Local-Currency Equity-Index Returns ({label})")
     plt.xlabel("Date")
     plt.tight_layout()
     save_figure(fig, f"returns_timeseries_{label}")
@@ -144,8 +147,14 @@ def plot_volatility_series(vol_df: pd.DataFrame, measure: str, label: str):
                 linewidth=0.5, alpha=0.8)
         ax.set_ylabel(country)
 
-    measure_name = measure.replace("_", " ").title()
-    axes[0].set_title(f"{measure_name} - ASEAN Markets ({label})")
+    if measure == "vol_parkinson" and label == "intersection":
+        title_str = "Daily Parkinson Range Volatility"
+    elif measure == "vol_parkinson":
+        title_str = "Daily Parkinson Range Volatility (Weekly)"
+    else:
+        title_str = f"{measure.replace('_', ' ').title()} - ASEAN Markets ({label})"
+
+    axes[0].set_title(title_str)
     plt.xlabel("Date")
     plt.tight_layout()
     save_figure(fig, f"volatility_{measure}_{label}")

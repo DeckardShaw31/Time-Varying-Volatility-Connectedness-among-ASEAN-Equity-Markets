@@ -55,32 +55,31 @@ def plot_tci(rolling_df: pd.DataFrame, title: str, filename: str):
 
 def plot_net_connectedness(rolling_df: pd.DataFrame, title: str,
                             filename: str):
-    """Plot net directional connectedness for each market."""
+    """Plot net directional connectedness for each market in a 3x2 grid layout."""
     setup_plot_style()
     net_cols = [c for c in rolling_df.columns if c.startswith("Net_")]
     countries = [c.replace("Net_", "") for c in net_cols]
 
-    n = len(countries)
-    fig, axes = plt.subplots(n, 1, figsize=(14, 3 * n), sharex=True)
+    fig, axes = plt.subplots(3, 2, figsize=(14, 10), sharex=True)
+    axes_flat = axes.flatten()
 
-    colors = plt.cm.tab10(np.linspace(0, 1, n))
+    colors = plt.cm.tab10(np.linspace(0, 1, len(countries)))
+    dates = rolling_df["date"]
 
     for i, (col, country) in enumerate(zip(net_cols, countries)):
-        ax = axes[i] if n > 1 else axes
+        ax = axes_flat[i]
         values = rolling_df[col]
-        dates = rolling_df["date"]
 
         ax.fill_between(dates, values, where=values >= 0,
                         color=colors[i], alpha=0.4, label="Net transmitter")
         ax.fill_between(dates, values, where=values < 0,
                         color="gray", alpha=0.3, label="Net receiver")
         ax.axhline(y=0, color="black", linewidth=0.5)
-        ax.set_ylabel(country)
-        if i == 0:
-            ax.set_title(title)
+        ax.set_title(country, fontsize=12)
+        ax.set_ylabel("Net (%)")
 
-    plt.xlabel("Date")
-    plt.tight_layout()
+    fig.suptitle(title, fontsize=14, y=0.98)
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
     save_figure(fig, filename)
     plt.close(fig)
 
@@ -164,15 +163,18 @@ def main():
                     f"{rolling_df['TCI'].max():.2f}%")
         logger.info(f"  TCI mean:  {rolling_df['TCI'].mean():.2f}%")
 
-        # Plots
-        plot_tci(rolling_df,
-                 f"Total Connectedness Index - {measure} ({sync})",
-                 f"tci_rolling_{label}")
+        # Titles matching publication requirements
+        if measure == "vol_parkinson" and sync == "intersection":
+            tci_title = "Time-Varying Total Volatility Connectedness"
+            net_title = "Net Directional Volatility Connectedness by Market"
+        else:
+            tci_title = f"Time-Varying Total Volatility Connectedness ({measure})"
+            net_title = f"Net Directional Volatility Connectedness ({measure})"
 
-        plot_net_connectedness(
-            rolling_df,
-            f"Net Directional Connectedness - {measure} ({sync})",
-            f"net_connectedness_{label}")
+        # Plots
+        plot_tci(rolling_df, tci_title, f"tci_rolling_{label}")
+
+        plot_net_connectedness(rolling_df, net_title, f"net_connectedness_{label}")
 
         plot_from_to(rolling_df, "FROM",
                      f"Directional FROM Others - {measure} ({sync})",

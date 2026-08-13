@@ -193,8 +193,8 @@ def plot_fevd_heatmap(theta_norm: np.ndarray, labels: list, title: str,
                     color=color, fontsize=9)
 
     ax.set_title(title)
-    ax.set_xlabel("From")
-    ax.set_ylabel("To")
+    ax.set_xlabel("Shock source")
+    ax.set_ylabel("Affected market")
     plt.colorbar(im, ax=ax, label="% of FEVD")
     plt.tight_layout()
     save_figure(fig, filename)
@@ -206,7 +206,7 @@ def main():
     logger.info("Stage 8: VAR model estimation and GFEVD")
     logger.info("=" * 60)
 
-    # Process baseline: Parkinson volatility on intersection dataset
+    # Process baseline configuration
     baseline_panels = [
         ("vol_parkinson", "intersection", "panel_vol_parkinson_intersection.csv"),
         ("vol_squared", "intersection", "panel_vol_squared_intersection.csv"),
@@ -237,10 +237,15 @@ def main():
         logger.info(f"  Saved -> {table_path}")
 
         # Save GFEVD heatmap
+        if measure == "vol_parkinson" and sync == "intersection":
+            heatmap_title = "Full-Sample Volatility Variance Decomposition"
+        else:
+            heatmap_title = f"Full-Sample Volatility Variance Decomposition ({measure})"
+
         plot_fevd_heatmap(
             results["theta_norm"],
             list(panel.columns),
-            f"GFEVD - {measure} ({sync})",
+            heatmap_title,
             f"gfevd_heatmap_{label}"
         )
 
