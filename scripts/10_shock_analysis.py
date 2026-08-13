@@ -362,20 +362,50 @@ def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
         "p_value": result.pvalues,
     })
 
+    # Add model summary metrics for Table 7 manuscript integration
+    stats_rows = pd.DataFrame({
+        "coefficient": [result.nobs, result.rsquared, result.rsquared_adj, nw_lags, result.fvalue, result.f_pvalue],
+        "std_error": [np.nan] * 6,
+        "t_stat": [np.nan] * 6,
+        "p_value": [np.nan] * 6,
+    }, index=["N_obs", "R_squared", "Adj_R_squared", "HAC_maxlags", "F_stat", "Prob_F"])
+
+    full_reg_table = pd.concat([coef_table, stats_rows])
+
     out_table = config.OUT_TABLES / "hac_regression_coefficients.csv"
-    coef_table.to_csv(out_table)
+    full_reg_table.to_csv(out_table)
     deliv_table = config.DELIVERABLES / "hac_regression_coefficients.csv"
-    coef_table.to_csv(deliv_table)
+    full_reg_table.to_csv(deliv_table)
     logger.info(f"  Saved HAC regression table -> {out_table} and {deliv_table}")
+    logger.info(f"  Model fit: N={int(result.nobs)}, R²={result.rsquared:.4f}, Adj R²={result.rsquared_adj:.4f}, HAC Lags={nw_lags}")
 
     return {
         "result": result,
-        "coefficients": coef_table,
+        "coefficients": full_reg_table,
         "r_squared": result.rsquared,
         "adj_r_squared": result.rsquared_adj,
         "nobs": result.nobs,
         "nw_lags": nw_lags,
     }
+
+
+def create_alternative_event_windows() -> pd.DataFrame:
+    """
+    Create alternative event windows with extended shock endpoints (+20 trading days)
+    to test sensitivity of shock-associated TCI shifts to window definitions.
+    """
+    alt_events = []
+    for ev in DEFAULT_EVENTS:
+        ev_copy = dict(ev)
+        s_end = pd.to_datetime(ev["shock_end"]) + pd.Timedelta(days=30)
+        ev_copy["shock_end"] = s_end.strftime("%Y-%m-%d")
+        alt_events.append(ev_copy)
+
+    events = pd.DataFrame(alt_events)
+    for col in ["event_date", "shock_start", "shock_end",
+                "tranquil_start", "tranquil_end"]:
+        events[col] = pd.to_datetime(events[col])
+    return events
 
 
 def main():
@@ -393,7 +423,6 @@ def main():
     # 2. Load rolling connectedness
     rolling_path = config.OUT_RESULTS / "rolling_connectedness_vol_parkinson_intersection.csv"
     if not rolling_path.exists():
-        # Try squared returns
         rolling_path = config.OUT_RESULTS / "rolling_connectedness_vol_squared_intersection.csv"
 
     if not rolling_path.exists():
@@ -405,16 +434,23 @@ def main():
 
     tci_series = rolling_df["TCI"]
 
-    # 3. Event-window analysis
+    # 3. Baseline Event-window analysis
     event_results = event_analysis(tci_series, events, rolling_df)
     if not event_results.empty:
         out_path = config.OUT_TABLES / "shock_analysis_results.csv"
         event_results.to_csv(out_path, index=False)
         logger.info(f"  Saved shock analysis -> {out_path}")
 
-        # Summary
         n_increases = (event_results["shock_associated_increase"] == "Yes").sum()
         logger.info(f"\n  Significant TCI increases detected in {n_increases}/{len(event_results)} events")
+
+    # 3b. Alternative Event-window Sensitivity Analysis (+20 trading days extended endpoints)
+    alt_events = create_alternative_event_windows()
+    alt_results = event_analysis(tci_series, alt_events, rolling_df)
+    if not alt_results.empty:
+        sens_path = config.OUT_TABLES / "shock_analysis_sensitivity.csv"
+        alt_results.to_csv(sens_path, index=False)
+        logger.info(f"  Saved alternative window sensitivity analysis -> {sens_path}")
 
     # 4. HAC regression (reading raw daily levels for true monthly level differencing)
     global_path = config.DATA_RAW / "global_daily_raw.csv"
