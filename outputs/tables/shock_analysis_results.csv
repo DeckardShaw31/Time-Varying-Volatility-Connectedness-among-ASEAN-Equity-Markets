@@ -1,9 +1,9 @@
-event_name,shock_n,tranquil_n,shock_mean_tci,tranquil_mean_tci,diff_mean,diff_median,mbb_ci_b20,mbb_ci_b60,boot_pval,shock_associated_increase,net_change_Indonesia,net_change_Malaysia,net_change_Philippines,net_change_Singapore,net_change_Thailand,net_change_Vietnam
-European Debt Crisis,204,49,28.73,21.1,7.63,9.82,"[5.42, 10.09]",Infeasible,0.0,Yes,16.78,-2.5,-4.05,-2.33,-6.72,-1.18
-Taper Tantrum,77,77,20.75,13.51,7.24,9.87,"[5.78, 10.03]",Infeasible,0.0,Yes,-0.4,2.71,0.15,-3.7,6.52,-5.28
-China Stock Market Crash,144,100,18.82,10.29,8.53,9.27,"[5.88, 11.69]",Infeasible,0.0,Yes,3.87,-8.06,2.75,5.59,-6.02,1.88
-US-China Trade War Escalation,154,114,23.86,11.73,12.13,13.26,"[11.21, 15.47]",Infeasible,0.0,Yes,-4.56,0.51,-7.46,-5.38,10.45,6.44
-COVID-19 Pandemic,82,123,41.75,21.77,19.98,29.94,"[7.22, 31.16]",Infeasible,0.0018,Yes,3.53,-7.67,-1.11,-0.34,17.75,-12.16
-Russia-Ukraine War,51,99,13.82,13.21,0.61,0.52,"[-0.88, 2.07]",Infeasible,0.2258,No,0.21,-0.72,1.27,-2.24,-0.36,1.84
-Global Monetary Tightening 2022,123,99,17.9,13.21,4.69,4.14,"[2.57, 6.98]",Infeasible,0.0,Yes,2.2,3.26,0.18,-0.73,-5.51,0.6
-US Banking Crisis 2023,41,57,16.87,19.03,-2.16,-2.99,"[-3.82, -0.77]",Infeasible,0.0034,No,-2.57,6.19,1.6,-1.66,-1.03,-2.53
+event_name,shock_n,tranquil_n,shock_mean_tci,tranquil_mean_tci,diff_mean,diff_median,mbb_ci_b10,mbb_ci_b20,boot_pval,shock_associated_increase,net_change_Indonesia,net_change_Malaysia,net_change_Philippines,net_change_Singapore,net_change_Thailand,net_change_Vietnam
+European Debt Crisis,204,49,28.73,21.1,7.63,9.82,"[5.90, 9.54]","[5.53, 10.09]",< 0.0002,Yes,16.78,-2.5,-4.05,-2.33,-6.72,-1.18
+Taper Tantrum,77,77,20.75,13.51,7.24,9.87,"[5.30, 9.87]","[5.80, 10.04]",< 0.0002,Yes,-0.4,2.71,0.15,-3.7,6.52,-5.28
+China Stock Market Crash,144,100,18.82,10.29,8.53,9.27,"[6.41, 10.95]","[6.04, 11.60]",< 0.0002,Yes,3.87,-8.06,2.75,5.59,-6.02,1.88
+US-China Trade War Escalation,154,114,23.86,11.73,12.13,13.26,"[10.95, 14.51]","[11.08, 15.46]",< 0.0002,Yes,-4.56,0.51,-7.46,-5.38,10.45,6.44
+COVID-19 Pandemic,82,123,41.75,21.77,19.98,29.94,"[9.81, 29.84]","[7.56, 31.12]",0.0014,Yes,3.53,-7.67,-1.11,-0.34,17.75,-12.16
+Russia-Ukraine War,51,99,13.82,13.21,0.61,0.52,"[-0.56, 1.72]","[-0.92, 2.08]",0.2370,No,0.21,-0.72,1.27,-2.24,-0.36,1.84
+Global Monetary Tightening 2022,123,99,17.9,13.21,4.69,4.14,"[3.09, 6.37]","[2.57, 7.04]",< 0.0002,Yes,2.2,3.26,0.18,-0.73,-5.51,0.6
+US Banking Crisis 2023,41,57,16.87,19.03,-2.16,-2.99,"[-3.61, -0.59]","[-3.75, -0.72]",0.0016,No,-2.57,6.19,1.6,-1.66,-1.03,-2.53

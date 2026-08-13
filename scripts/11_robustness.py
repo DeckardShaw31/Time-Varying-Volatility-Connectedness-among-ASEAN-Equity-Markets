@@ -86,6 +86,17 @@ def run_robustness_grid(panels: dict, windows: list, horizons: list,
                         "tci_max": round(tci.max(), 2),
                         "tci_median": round(tci.median(), 2),
                     }
+                    # Add net directional connectedness averages for each country
+                    for country in config.COUNTRY_ORDER:
+                        net_col = f"Net_{country}"
+                        if net_col in rolling_df.columns:
+                            result[f"mean_net_{country}"] = round(rolling_df[net_col].mean(), 2)
+
+                    # Add percentage of windows where Vietnam is a net transmitter (Net_Vietnam > 0)
+                    if "Net_Vietnam" in rolling_df.columns:
+                        vn_trans_pct = (rolling_df["Net_Vietnam"] > 0).mean() * 100.0
+                        result["share_Vietnam_net_transmitter"] = round(vn_trans_pct, 2)
+
                     results.append(result)
 
                     # Save individual rolling results
@@ -157,8 +168,8 @@ def plot_robustness_comparison(summary: pd.DataFrame):
 
 def run_garch_filtered_ewma_correlations(panel: pd.DataFrame, label: str) -> dict:
     """
-    Estimate GARCH-filtered EWMA conditional correlations (GARCH(1,1) standardized residuals + EWMA smoothing).
-    This is an honest, non-parametric alternative to multivariate DCC-GARCH.
+    Estimate GARCH-filtered EWMA conditional market correlations (GARCH(1,1) standardized residuals + EWMA smoothing).
+    Fits univariate GARCH(1,1) to return series to extract standardized innovations and compute conditional return correlations.
     """
     try:
         from arch import arch_model
@@ -302,10 +313,15 @@ def main():
         lag_df.to_csv(lag_path, index=False)
         logger.info(f"  Saved alternative VAR lags -> {lag_path}")
 
-    # GARCH-filtered EWMA conditional correlations (baseline panel)
-    run_garch_filtered_ewma_correlations(
-        panels[baseline_key], f"{baseline_key[0]}_{baseline_key[1]}"
-    )
+    # GARCH-filtered EWMA conditional correlations (fitted on daily return series in %)
+    ret_path = config.DATA_PROC / "asean_returns_intersection.csv"
+    if ret_path.exists():
+        ret_df = pd.read_csv(ret_path, parse_dates=["date"])
+        ret_panel = ret_df.pivot_table(index="date", columns="country", values="return_lcu").dropna()
+        ret_panel = ret_panel[[c for c in config.COUNTRY_ORDER if c in ret_panel.columns]]
+        run_garch_filtered_ewma_correlations(ret_panel, "returns_intersection")
+    else:
+        run_garch_filtered_ewma_correlations(panels[baseline_key], f"{baseline_key[0]}_{baseline_key[1]}")
 
     logger.info(f"\n{'-' * 60}")
     logger.info("Stage 11 complete.")

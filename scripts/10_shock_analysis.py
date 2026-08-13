@@ -121,10 +121,10 @@ def create_event_windows() -> pd.DataFrame:
 
 
 def moving_block_bootstrap_mean_diff(shock_vals: np.ndarray, tranquil_vals: np.ndarray,
-                                     block_sizes: list = [20, 60, 120], n_boot: int = 5000, ci: float = 0.95) -> dict:
+                                     block_sizes: list = [10, 20], n_boot: int = 5000, ci: float = 0.95) -> dict:
     """
     Moving-block bootstrap confidence intervals for difference in means (mean_shock - mean_tranquil).
-    Only evaluates feasible block sizes (B <= min(n_shock, n_tranquil)/2).
+    Evaluates feasible block sizes (B=10, B=20) where B <= min(n_shock, n_tranquil)/2.
     Infeasible block sizes are skipped to avoid silent fallback to i.i.d. sampling.
     """
     observed_diff = shock_vals.mean() - tranquil_vals.mean()
@@ -142,7 +142,6 @@ def moving_block_bootstrap_mean_diff(shock_vals: np.ndarray, tranquil_vals: np.n
     results_by_block = {}
     rng = np.random.default_rng(42)
 
-    feasible_blocks = []
     for b_size in block_sizes:
         if b_size > min_len // 2:
             results_by_block[f"B{b_size}"] = {
@@ -154,7 +153,6 @@ def moving_block_bootstrap_mean_diff(shock_vals: np.ndarray, tranquil_vals: np.n
             }
             continue
 
-        feasible_blocks.append(b_size)
         boot_diffs = np.empty(n_boot)
         for b in range(n_boot):
             b_shock = draw_mbb_sample(shock_vals, n_shock, b_size, rng)
@@ -173,31 +171,23 @@ def moving_block_bootstrap_mean_diff(shock_vals: np.ndarray, tranquil_vals: np.n
             "feasible": True,
         }
 
-    # Primary feasible block size (prefer B20, or smallest feasible)
-    primary_b = feasible_blocks[0] if feasible_blocks else None
-    if primary_b is not None:
-        p_res = results_by_block[f"B{primary_b}"]
-        ci_lower_p = p_res["ci_lower"]
-        ci_upper_p = p_res["ci_upper"]
-        p_val_p = p_res["p_value"]
-        is_sig = p_res["significant"]
-    else:
-        ci_lower_p = ci_upper_p = p_val_p = np.nan
-        is_sig = False
+    b10_res = results_by_block.get("B10", {})
+    b20_res = results_by_block.get("B20", {})
 
-    b60_res = results_by_block.get("B60", {})
-    ci_lower_b60 = b60_res.get("ci_lower", np.nan)
-    ci_upper_b60 = b60_res.get("ci_upper", np.nan)
+    # Significance across all feasible blocks
+    feasible_sigs = [v["significant"] for v in results_by_block.values() if v.get("feasible", False)]
+    is_sig = all(feasible_sigs) if feasible_sigs else False
+
+    p_val_report = b20_res.get("p_value", b10_res.get("p_value", np.nan))
 
     return {
         "observed_diff": observed_diff,
-        "ci_lower_primary": ci_lower_p,
-        "ci_upper_primary": ci_upper_p,
-        "ci_lower_b60": ci_lower_b60,
-        "ci_upper_b60": ci_upper_b60,
-        "p_value": p_val_p,
+        "ci_lower_b10": b10_res.get("ci_lower", np.nan),
+        "ci_upper_b10": b10_res.get("ci_upper", np.nan),
+        "ci_lower_b20": b20_res.get("ci_lower", np.nan),
+        "ci_upper_b20": b20_res.get("ci_upper", np.nan),
+        "p_value": p_val_report,
         "significant": is_sig,
-        "primary_b": primary_b,
     }
 
 
@@ -206,7 +196,7 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
     """
     For each event, evaluate shock-associated shifts in TCI using Moving-Block Bootstrap.
     """
-    logger.info("Event-window analysis with Multi-Block Moving-Block Bootstrap ...")
+    logger.info("Event-window analysis with Feasible Moving-Block Bootstrap (B10, B20) ...")
 
     results = []
     for _, event in events_df.iterrows():
@@ -232,8 +222,16 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
 
         boot = moving_block_bootstrap_mean_diff(shock_vals, tranquil_vals)
 
-        ci_b20_str = f"[{boot['ci_lower_primary']:.2f}, {boot['ci_upper_primary']:.2f}]" if not np.isnan(boot['ci_lower_primary']) else "N/A"
-        ci_b60_str = f"[{boot['ci_lower_b60']:.2f}, {boot['ci_upper_b60']:.2f}]" if not np.isnan(boot['ci_lower_b60']) else "Infeasible"
+        ci_b10_str = f"[{boot['ci_lower_b10']:.2f}, {boot['ci_upper_b10']:.2f}]" if not np.isnan(boot['ci_lower_b10']) else "N/A"
+        ci_b20_str = f"[{boot['ci_lower_b20']:.2f}, {boot['ci_upper_b20']:.2f}]" if not np.isnan(boot['ci_lower_b20']) else "Infeasible"
+
+        pval_val = boot["p_value"]
+        if np.isnan(pval_val):
+            pval_str = "N/A"
+        elif pval_val < 0.0002:
+            pval_str = "< 0.0002"
+        else:
+            pval_str = f"{pval_val:.4f}"
 
         result = {
             "event_name": name,
@@ -243,9 +241,9 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
             "tranquil_mean_tci": round(tranquil_mean, 2),
             "diff_mean": round(diff_mean, 2),
             "diff_median": round(diff_median, 2),
+            "mbb_ci_b10": ci_b10_str,
             "mbb_ci_b20": ci_b20_str,
-            "mbb_ci_b60": ci_b60_str,
-            "boot_pval": round(boot["p_value"], 4) if not np.isnan(boot["p_value"]) else np.nan,
+            "boot_pval": pval_str,
             "shock_associated_increase": "Yes" if (diff_mean > 0 and boot["significant"]) else "No",
         }
 
@@ -261,7 +259,7 @@ def event_analysis(tci_series: pd.Series, events_df: pd.DataFrame,
         results.append(result)
         sign = "↑ SHOCK INCREASE" if result["shock_associated_increase"] == "Yes" else "-"
         logger.info(f"  {name}: Δ TCI = {diff_mean:+.2f}% "
-                    f"B20 CI={result['mbb_ci_b20']} B60 CI={result['mbb_ci_b60']} {sign}")
+                    f"B10 CI={result['mbb_ci_b10']} B20 CI={result['mbb_ci_b20']} p={pval_str} {sign}")
 
     return pd.DataFrame(results)
 
@@ -418,8 +416,11 @@ def main():
         n_increases = (event_results["shock_associated_increase"] == "Yes").sum()
         logger.info(f"\n  Significant TCI increases detected in {n_increases}/{len(event_results)} events")
 
-    # 4. HAC regression
-    global_path = config.DATA_PROC / "global_returns.csv"
+    # 4. HAC regression (reading raw daily levels for true monthly level differencing)
+    global_path = config.DATA_RAW / "global_daily_raw.csv"
+    if not global_path.exists():
+        global_path = config.find_file("global_daily_raw.csv", "global_returns.csv")
+
     if global_path.exists():
         global_df = pd.read_csv(global_path, index_col=0, parse_dates=True)
         reg_results = hac_regression(tci_series, global_df)
@@ -427,9 +428,11 @@ def main():
         if reg_results:
             coef_path = config.OUT_TABLES / "hac_regression_coefficients.csv"
             reg_results["coefficients"].to_csv(coef_path)
-            logger.info(f"  Saved regression coefficients -> {coef_path}")
+            deliv_path = config.DELIVERABLES / "hac_regression_coefficients.csv"
+            reg_results["coefficients"].to_csv(deliv_path)
+            logger.info(f"  Saved regression coefficients -> {coef_path} and {deliv_path}")
     else:
-        logger.info("  Global returns not found - skipping HAC regression. "
+        logger.info("  Global raw data not found - skipping HAC regression. "
                     "Run Stage 2 first.")
 
     logger.info(f"\n{'-' * 60}")

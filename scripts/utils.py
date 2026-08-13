@@ -322,7 +322,8 @@ def rolling_connectedness(data: pd.DataFrame, window: int,
             if fixed_lag is not None:
                 selected_lag = fixed_lag
             else:
-                lag_result = model.select_order(maxlags=min(max_lag, window // K - 2))
+                max_p = max(1, min(max_lag, 4, (window - K - 2) // (K + 1)))
+                lag_result = model.select_order(maxlags=max_p)
                 selected_lag = getattr(lag_result, ic)
                 if selected_lag is None or selected_lag == 0:
                     selected_lag = 1
