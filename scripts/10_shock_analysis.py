@@ -372,16 +372,23 @@ def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
 
     full_reg_table = pd.concat([coef_table, stats_rows])
 
-    out_table = config.OUT_TABLES / "hac_regression_coefficients.csv"
-    full_reg_table.to_csv(out_table)
-    deliv_table = config.DELIVERABLES / "hac_regression_coefficients.csv"
-    full_reg_table.to_csv(deliv_table)
-    logger.info(f"  Saved HAC regression table -> {out_table} and {deliv_table}")
-    logger.info(f"  Model fit: N={int(result.nobs)}, R²={result.rsquared:.4f}, Adj R²={result.rsquared_adj:.4f}, HAC Lags={nw_lags}")
+    fit_stats = pd.DataFrame([{
+        "nobs": int(result.nobs),
+        "r_squared": result.rsquared,
+        "adj_r_squared": result.rsquared_adj,
+        "hac_lags": nw_lags,
+        "frequency": "monthly",
+    }])
+    fit_path = config.OUT_TABLES / "hac_regression_fit.csv"
+    fit_stats.to_csv(fit_path, index=False)
+    deliv_fit_path = config.DELIVERABLES / "hac_regression_fit.csv"
+    fit_stats.to_csv(deliv_fit_path, index=False)
+    logger.info(f"  Saved HAC regression fit -> {fit_path} and {deliv_fit_path}")
 
     return {
         "result": result,
         "coefficients": full_reg_table,
+        "fit_stats": fit_stats,
         "r_squared": result.rsquared,
         "adj_r_squared": result.rsquared_adj,
         "nobs": result.nobs,
