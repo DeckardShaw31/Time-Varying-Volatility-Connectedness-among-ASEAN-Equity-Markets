@@ -23,9 +23,9 @@ for d in [DATA_RAW, DATA_CLEANED, DATA_PROC, OUT_TABLES, OUT_FIGURES,
           OUT_RESULTS, DELIVERABLES, DATA_RAW / "epu"]:
     d.mkdir(parents=True, exist_ok=True)
 
-# Effective end date (dictated by available Philippines/Thailand market data)
+# Effective end date (frozen at closed quarter 2026-06-30)
 START_DATE = "2010-01-01"
-END_DATE   = "2026-07-18"
+END_DATE   = "2026-06-30"
 
 def find_file(*filenames) -> Path:
     """Helper to locate raw files in PROJECT_ROOT or DATA_RAW."""

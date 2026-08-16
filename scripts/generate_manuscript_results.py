@@ -95,16 +95,26 @@ def compile_manuscript_results() -> dict:
     if not events_sens_df.empty:
         results["event_analysis_sensitivity_extended_endpoints"] = events_sens_df.to_dict(orient="records")
 
-    # 5. HAC Drivers of Connectedness
+    # 5. HAC Regression Suite & GPR Diagnostics
     hac_coefs = safe_read_csv(config.OUT_TABLES / "hac_regression_coefficients.csv")
     hac_fit = safe_read_csv(config.OUT_TABLES / "hac_regression_fit.csv")
     hac_robust = safe_read_csv(config.OUT_TABLES / "hac_regression_robustness.csv")
+    hac_gpr_diag = safe_read_csv(config.OUT_TABLES / "hac_gpr_diagnostics.csv")
+    hac_vif = safe_read_csv(config.OUT_TABLES / "hac_regressor_vif.csv")
+    hac_corr = safe_read_csv(config.OUT_TABLES / "hac_regressor_correlation_matrix.csv")
+
     if not hac_coefs.empty:
         results["hac_regression_baseline_coefficients"] = hac_coefs.to_dict(orient="records")
     if not hac_fit.empty:
         results["hac_regression_fit"] = hac_fit.to_dict(orient="records")[0]
     if not hac_robust.empty:
         results["hac_regression_multi_specification_robustness"] = hac_robust.to_dict(orient="records")
+    if not hac_gpr_diag.empty:
+        results["hac_gpr_diagnostics"] = hac_gpr_diag.to_dict(orient="records")
+    if not hac_vif.empty:
+        results["hac_regressor_vif"] = hac_vif.to_dict(orient="records")
+    if not hac_corr.empty:
+        results["hac_regressor_correlation_matrix"] = hac_corr.to_dict(orient="records")
 
     # 6. Robustness Summary Grid & Alternative Lags
     robust_df = safe_read_csv(config.OUT_TABLES / "robustness_summary.csv")
@@ -117,10 +127,13 @@ def compile_manuscript_results() -> dict:
     if not all_lags_diag.empty:
         results["var_diagnostics_all_lags_parkinson"] = all_lags_diag.to_dict(orient="records")
 
-    # 7. Portfolio Diversification Application
+    # 7. Portfolio Diversification Application & Bootstrap Inference
     port_df = safe_read_csv(config.OUT_TABLES / "portfolio_diversification_results.csv")
+    port_boot = safe_read_csv(config.OUT_TABLES / "portfolio_bootstrap_inference.csv")
     if not port_df.empty:
         results["portfolio_diversification_regimes"] = port_df.to_dict(orient="records")
+    if not port_boot.empty:
+        results["portfolio_bootstrap_inference"] = port_boot.to_dict(orient="records")
 
     return results
 
@@ -191,6 +204,20 @@ def flatten_results_to_dataframe(results: dict) -> pd.DataFrame:
         add_entry(f"Portfolio Regime: {reg_name}", "GMV Expected Shortfall (95%)", p.get("GMV_ES95_pct", ""), "%")
         add_entry(f"Portfolio Regime: {reg_name}", "GMV Annualized Turnover", p.get("GMV_Ann_Turnover_pct", ""), "%")
         add_entry(f"Portfolio Regime: {reg_name}", "GMV Net Sharpe Ratio (10bps cost)", p.get("GMV_Sharpe_Net", ""))
+
+    # Portfolio Bootstrap Inference
+    port_boot_list = results.get("portfolio_bootstrap_inference", [])
+    for pb in port_boot_list:
+        m_name = pb.get("Metric", "")
+        add_entry(f"Portfolio Bootstrap (High vs Low): {m_name}", "Diff (High - Low)", pb.get("Diff_High_minus_Low", ""))
+        add_entry(f"Portfolio Bootstrap (High vs Low): {m_name}", "MBB 95% CI", pb.get("MBB_95_CI", ""))
+        add_entry(f"Portfolio Bootstrap (High vs Low): {m_name}", "Bootstrap p-value", pb.get("Bootstrap_p_value", ""))
+        add_entry(f"Portfolio Bootstrap (High vs Low): {m_name}", "Significant at 5%", pb.get("Significant_5pct", ""))
+
+    # HAC Regressor VIF
+    vif_list = results.get("hac_regressor_vif", [])
+    for v in vif_list:
+        add_entry("HAC Regressor Multicollinearity (VIF)", v.get("Variable", ""), v.get("VIF", ""))
 
     # Key Robustness Entries
     robust_list = results.get("robustness_grid_summary", [])

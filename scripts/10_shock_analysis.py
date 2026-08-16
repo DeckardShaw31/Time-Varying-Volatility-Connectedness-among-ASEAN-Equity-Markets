@@ -387,9 +387,15 @@ def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
     if "GPRD_ACT" in m_df.columns:
         m_df["GPR_ACT"] = m_df["GPRD_ACT"]
 
+    # Additional variables for comprehensive GPR diagnostics
+    m_df["ΔTCI"] = m_df["TCI"] - m_df["TCI"].shift(1)
+    m_df["lag_TCI"] = m_df["TCI"].shift(1)
+    if "VIX" in m_df.columns:
+        m_df["ΔVIX"] = m_df["VIX"] - m_df["VIX"].shift(1)
+
     base_cols = ["TCI", "VIX", "GPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"]
     available_base = [c for c in base_cols if c in m_df.columns]
-    m_clean = m_df.dropna(subset=available_base)
+    m_clean = m_df.dropna(subset=available_base).copy()
 
     logger.info(f"  Monthly regression complete cases: {len(m_clean)} months")
     if len(m_clean) < 20:
@@ -408,6 +414,49 @@ def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
     x_base_cols = [c for c in ["VIX", "GPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
     res_base = fit_model(m_clean["TCI"], m_clean[x_base_cols], "Baseline")
 
+    # 2. VIX-only Model (excluding GPR)
+    x_vix_only = [c for c in ["VIX", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
+    res_vix_only = fit_model(m_clean["TCI"], m_clean[x_vix_only], "VIX_Only")
+
+    # 3. GPR-only Model (excluding VIX)
+    x_gpr_only = [c for c in ["GPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
+    res_gpr_only = fit_model(m_clean["TCI"], m_clean[x_gpr_only], "GPR_Only")
+
+    # 4. Orthogonalized GPR (regressing GPR on VIX)
+    res_gpr_on_vix = OLS(m_clean["GPR"], add_constant(m_clean["VIX"])).fit()
+    m_clean["GPR_orth"] = res_gpr_on_vix.resid
+    x_orth_cols = [c for c in ["VIX", "GPR_orth", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
+    res_orth = fit_model(m_clean["TCI"], m_clean[x_orth_cols], "Orthogonalized_GPR")
+
+    # 5. Fully Differenced Model (ΔTCI ~ ΔVIX + ΔGPR + controls)
+    diff_all_cols = [c for c in ["ΔVIX", "ΔGPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
+    m_diff_all = m_clean.dropna(subset=["ΔTCI"] + diff_all_cols)
+    res_diff_all = fit_model(m_diff_all["ΔTCI"], m_diff_all[diff_all_cols], "Fully_Differenced")
+
+    # 6. Autoregressive AR(1)-TCI Model (TCI ~ lag_TCI + VIX + GPR + controls)
+    ar1_cols = [c for c in ["lag_TCI", "VIX", "GPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
+    m_ar1 = m_clean.dropna(subset=ar1_cols)
+    res_ar1 = fit_model(m_ar1["TCI"], m_ar1[ar1_cols], "AR1_TCI")
+
+    # 7. Standardized Model
+    std_df = (m_clean[available_base] - m_clean[available_base].mean()) / m_clean[available_base].std()
+    res_std = fit_model(std_df["TCI"], std_df[x_base_cols], "Standardized")
+
+    # 8. Lagged Uncertainty Model
+    lag_cols = [c for c in ["lag_VIX", "lag_GPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
+    m_lag = m_clean.dropna(subset=lag_cols)
+    res_lag = fit_model(m_lag["TCI"], m_lag[lag_cols], "Lagged")
+
+    # 9. Log GPR Model
+    log_gpr_cols = [c for c in ["VIX", "ln_GPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
+    m_log = m_clean.dropna(subset=log_gpr_cols)
+    res_log = fit_model(m_log["TCI"], m_log[log_gpr_cols], "Log_GPR")
+
+    # 10. GPR Threat vs Act Decomposition
+    threat_act_cols = [c for c in ["VIX", "GPR_THREAT", "GPR_ACT", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
+    res_ta = fit_model(m_clean["TCI"], m_clean[threat_act_cols], "Threat_Act") if len(threat_act_cols) >= 3 else None
+
+    # Base table for Table 8 export
     coef_table = pd.DataFrame({
         "coefficient": res_base.params,
         "std_error": res_base.bse,
@@ -422,42 +471,25 @@ def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
     }, index=["N_obs", "R_squared", "Adj_R_squared", "HAC_maxlags", "F_stat", "Prob_F"])
     full_base_table = pd.concat([coef_table, stats_rows])
 
-    # 2. Standardized Model
-    std_df = (m_clean[available_base] - m_clean[available_base].mean()) / m_clean[available_base].std()
-    res_std = fit_model(std_df["TCI"], std_df[x_base_cols], "Standardized")
-
-    # 3. Lagged Uncertainty Model
-    lag_cols = [c for c in ["lag_VIX", "lag_GPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
-    m_lag = m_clean.dropna(subset=lag_cols)
-    res_lag = fit_model(m_lag["TCI"], m_lag[lag_cols], "Lagged")
-
-    # 4. Log GPR Model
-    log_gpr_cols = [c for c in ["VIX", "ln_GPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
-    m_log = m_clean.dropna(subset=log_gpr_cols)
-    res_log = fit_model(m_log["TCI"], m_log[log_gpr_cols], "Log_GPR")
-
-    # 5. Differenced GPR Model
-    diff_gpr_cols = [c for c in ["VIX", "ΔGPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
-    m_diff = m_clean.dropna(subset=diff_gpr_cols)
-    res_diff = fit_model(m_diff["TCI"], m_diff[diff_gpr_cols], "Diff_GPR")
-
-    # 6. GPR Threat vs Act Decomposition
-    threat_act_cols = [c for c in ["VIX", "GPR_THREAT", "GPR_ACT", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
-    res_ta = fit_model(m_clean["TCI"], m_clean[threat_act_cols], "Threat_Act") if len(threat_act_cols) >= 3 else None
-
     # Construct unified multi-specification comparison table
     models_dict = {
         "(1) Baseline": res_base,
         "(2) Standardized": res_std,
         "(3) Lagged Uncertainty": res_lag,
         "(4) Log GPR": res_log,
-        "(5) Diff GPR": res_diff,
+        "(5) Threat/Act": res_ta,
+        "(6) VIX Only": res_vix_only,
+        "(7) GPR Only": res_gpr_only,
+        "(8) Orthogonal GPR": res_orth,
+        "(9) Differenced": res_diff_all,
+        "(10) AR(1) TCI": res_ar1,
     }
-    if res_ta is not None:
-        models_dict["(6) Threat/Act"] = res_ta
+    # Filter out None models
+    models_dict = {k: v for k, v in models_dict.items() if v is not None}
 
-    all_regressors = ["const", "VIX", "GPR", "lag_VIX", "lag_GPR", "ln_GPR", "ΔGPR",
-                      "GPR_THREAT", "GPR_ACT", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"]
+    all_regressors = ["const", "lag_TCI", "VIX", "GPR", "GPR_orth", "ΔVIX", "ΔGPR",
+                      "lag_VIX", "lag_GPR", "ln_GPR", "GPR_THREAT", "GPR_ACT",
+                      "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"]
 
     robust_rows = []
     for var in all_regressors:
@@ -483,16 +515,81 @@ def hac_regression(tci_series: pd.Series, global_df: pd.DataFrame) -> dict:
         "R-squared": lambda r: f"{r.rsquared:.4f}",
         "Adj. R-squared": lambda r: f"{r.rsquared_adj:.4f}",
         "HAC Maxlags": lambda r: str(nw_lags),
-        "F-statistic": lambda r: f"{r.fvalue:.2f}" if not np.isnan(r.fvalue) else "N/A",
-        "Prob > F": lambda r: f"{r.f_pvalue:.4f}" if not np.isnan(r.f_pvalue) else "N/A",
+        "F-statistic": lambda r: f"{r.fvalue:.2f}" if (hasattr(r, 'fvalue') and not np.isnan(r.fvalue)) else "N/A",
+        "Prob > F": lambda r: f"{r.f_pvalue:.4f}" if (hasattr(r, 'f_pvalue') and not np.isnan(r.f_pvalue)) else "N/A",
     }
     for stat_name, func in stats_map.items():
         s_row = {"Variable": stat_name}
         for m_name, res in models_dict.items():
-            s_row[m_name] = func(res)
+            try:
+                s_row[m_name] = func(res)
+            except Exception:
+                s_row[m_name] = "N/A"
         robust_rows.append(s_row)
 
     robust_table = pd.DataFrame(robust_rows)
+
+    # Correlation Matrix and VIF Diagnostics
+    from statsmodels.stats.outliers_influence import variance_inflation_factor
+    vif_vars = [c for c in ["VIX", "GPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"] if c in m_clean.columns]
+    X_vif_mat = add_constant(m_clean[vif_vars])
+    vif_rows = []
+    for i, col in enumerate(X_vif_mat.columns):
+        if col == "const":
+            continue
+        vif_val = float(variance_inflation_factor(X_vif_mat.values, i))
+        vif_rows.append({"Variable": col, "VIF": round(vif_val, 3)})
+    vif_df = pd.DataFrame(vif_rows)
+
+    corr_df = m_clean[vif_vars].corr().round(4)
+    corr_df.to_csv(config.OUT_TABLES / "hac_regressor_correlation_matrix.csv")
+    corr_df.to_csv(config.DELIVERABLES / "hac_regressor_correlation_matrix.csv")
+    vif_df.to_csv(config.OUT_TABLES / "hac_regressor_vif.csv", index=False)
+    vif_df.to_csv(config.DELIVERABLES / "hac_regressor_vif.csv", index=False)
+
+    # Focused GPR Diagnostics Table
+    gpr_diag_models = {
+        "(1) Baseline": res_base,
+        "(2) VIX Only": res_vix_only,
+        "(3) GPR Only": res_gpr_only,
+        "(4) Orthogonal GPR": res_orth,
+        "(5) Differenced": res_diff_all,
+        "(6) AR(1) TCI": res_ar1,
+    }
+    gpr_diag_vars = ["const", "lag_TCI", "VIX", "GPR", "GPR_orth", "ΔVIX", "ΔGPR", "ΔOil", "ΔDGS2_pp", "ΔDollar", "ΔSP500"]
+    gpr_diag_rows = []
+    for var in gpr_diag_vars:
+        row_coef = {"Variable": var}
+        row_se = {"Variable": f"{var}_se"}
+        for m_name, res in gpr_diag_models.items():
+            if var in res.params.index:
+                c_val = res.params[var]
+                se_val = res.bse[var]
+                p_val = res.pvalues[var]
+                stars = "***" if p_val < 0.01 else ("**" if p_val < 0.05 else ("*" if p_val < 0.1 else ""))
+                row_coef[m_name] = f"{c_val:.4f}{stars}"
+                row_se[m_name] = f"({se_val:.4f})"
+            else:
+                row_coef[m_name] = ""
+                row_se[m_name] = ""
+        gpr_diag_rows.append(row_coef)
+        gpr_diag_rows.append(row_se)
+
+    for stat_name, func in stats_map.items():
+        s_row = {"Variable": stat_name}
+        for m_name, res in gpr_diag_models.items():
+            try:
+                s_row[m_name] = func(res)
+            except Exception:
+                s_row[m_name] = "N/A"
+        gpr_diag_rows.append(s_row)
+
+    gpr_diag_table = pd.DataFrame(gpr_diag_rows)
+    gpr_diag_path = config.OUT_TABLES / "hac_gpr_diagnostics.csv"
+    gpr_diag_table.to_csv(gpr_diag_path, index=False)
+    deliv_gpr_diag_path = config.DELIVERABLES / "hac_gpr_diagnostics.csv"
+    gpr_diag_table.to_csv(deliv_gpr_diag_path, index=False)
+    logger.info(f"  Saved focused GPR diagnostics -> {gpr_diag_path} and {deliv_gpr_diag_path}")
 
     fit_stats = pd.DataFrame([{
         "nobs": int(res_base.nobs),

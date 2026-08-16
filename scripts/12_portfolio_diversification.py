@@ -267,8 +267,8 @@ def run_portfolio_analysis(window: int = 250, cost_bps: float = 10.0):
     comp_df = pd.DataFrame(comparison_rows)
 
     # 6. Statistical Significance Tests (High TCI vs. Low TCI)
-    low_sub = df_results[regimes["Low TCI (<= Q25)"]]
-    high_sub = df_results[regimes["High TCI (>= Q75)"]]
+    low_sub = df_results[regimes["Low TCI (<= Q25)"]].copy()
+    high_sub = df_results[regimes["High TCI (>= Q75)"]].copy()
 
     # F-test for equality of EW variances
     var_ew_low = low_sub["Return_EW"].var()
@@ -290,7 +290,97 @@ def run_portfolio_analysis(window: int = 250, cost_bps: float = 10.0):
     logger.info(f"  GMV Volatility: Low={comp_df.loc[1, 'GMV_Ann_Vol_pct']}% vs High={comp_df.loc[3, 'GMV_Ann_Vol_pct']}% (F={f_stat_gmv:.2f}, p < 0.0001)")
     logger.info(f"  GMV DR: Low={comp_df.loc[1, 'GMV_DR']:.3f} vs High={comp_df.loc[3, 'GMV_DR']:.3f} (t={t_stat_dr:.2f}, p < 0.0001)")
 
-    # 7. Save Tables
+    # 7. Moving-Block Bootstrap Inference (B=20 days, 2000 draws)
+    logger.info("Running Moving-Block Bootstrap (MBB B=20, 2000 replications) for portfolio regime differences ...")
+    np.random.seed(42)
+    n_boot = 2000
+    block_size = 20
+    n_low = len(low_sub)
+    n_high = len(high_sub)
+
+    n_blocks_low = int(np.ceil(n_low / block_size))
+    n_blocks_high = int(np.ceil(n_high / block_size))
+
+    diff_ew_vol = []
+    diff_gmv_vol = []
+    diff_dr_gmv = []
+    diff_es95_gmv = []
+    diff_vol_red = []
+
+    for _ in range(n_boot):
+        # Sample blocks for low
+        starts_l = np.random.randint(0, max(1, n_low - block_size + 1), size=n_blocks_low)
+        idx_l = np.concatenate([np.arange(s, min(s + block_size, n_low)) for s in starts_l])[:n_low]
+        b_low = low_sub.iloc[idx_l]
+
+        # Sample blocks for high
+        starts_h = np.random.randint(0, max(1, n_high - block_size + 1), size=n_blocks_high)
+        idx_h = np.concatenate([np.arange(s, min(s + block_size, n_high)) for s in starts_h])[:n_high]
+        b_high = high_sub.iloc[idx_h]
+
+        v_ew_l = float(np.sqrt(252.0) * b_low["Return_EW"].std())
+        v_ew_h = float(np.sqrt(252.0) * b_high["Return_EW"].std())
+        diff_ew_vol.append(v_ew_h - v_ew_l)
+
+        v_gmv_l = float(np.sqrt(252.0) * b_low["Return_GMV"].std())
+        v_gmv_h = float(np.sqrt(252.0) * b_high["Return_GMV"].std())
+        diff_gmv_vol.append(v_gmv_h - v_gmv_l)
+
+        red_l = (1.0 - (v_gmv_l / v_ew_l)) * 100.0 if v_ew_l > 0 else 0.0
+        red_h = (1.0 - (v_gmv_h / v_ew_h)) * 100.0 if v_ew_h > 0 else 0.0
+        diff_vol_red.append(red_h - red_l)
+
+        dr_l = float(b_low["DR_GMV"].mean())
+        dr_h = float(b_high["DR_GMV"].mean())
+        diff_dr_gmv.append(dr_h - dr_l)
+
+        r_l = b_low["Return_GMV"]
+        r_h = b_high["Return_GMV"]
+        var_l = np.percentile(r_l, 5)
+        var_h = np.percentile(r_h, 5)
+        es_l = float(r_l[r_l <= var_l].mean()) if (r_l <= var_l).sum() > 0 else float(var_l)
+        es_h = float(r_h[r_h <= var_h].mean()) if (r_h <= var_h).sum() > 0 else float(var_h)
+        diff_es95_gmv.append(es_h - es_l)
+
+    boot_metrics = [
+        ("EW Realized Volatility (%)", diff_ew_vol, True),
+        ("GMV Realized Volatility (%)", diff_gmv_vol, True),
+        ("Diversification Ratio (DR)", diff_dr_gmv, False),
+        ("GMV 95% Expected Shortfall (%)", diff_es95_gmv, False),
+        ("GMV Volatility Reduction (%)", diff_vol_red, True),
+    ]
+
+    boot_rows = []
+    for name, draws, expect_positive in boot_metrics:
+        arr = np.array(draws)
+        d_mean = float(np.mean(arr))
+        ci_lower = float(np.percentile(arr, 2.5))
+        ci_upper = float(np.percentile(arr, 97.5))
+        if expect_positive:
+            pval = float((arr <= 0).mean())
+        else:
+            pval = float((arr >= 0).mean())
+        pval_two_sided = min(1.0, 2.0 * pval)
+        pval_str = "< 0.001" if pval_two_sided < 0.001 else f"{pval_two_sided:.4f}"
+
+        boot_rows.append({
+            "Metric": name,
+            "Diff_High_minus_Low": round(d_mean, 3),
+            "MBB_95_CI_Lower": round(ci_lower, 3),
+            "MBB_95_CI_Upper": round(ci_upper, 3),
+            "MBB_95_CI": f"[{ci_lower:.2f}, {ci_upper:.2f}]",
+            "Bootstrap_p_value": pval_str,
+            "Significant_5pct": "Yes" if (ci_lower > 0 if expect_positive else ci_upper < 0) else "No"
+        })
+
+    boot_df = pd.DataFrame(boot_rows)
+    boot_path = config.OUT_TABLES / "portfolio_bootstrap_inference.csv"
+    boot_df.to_csv(boot_path, index=False)
+    deliv_boot_path = config.DELIVERABLES / "portfolio_bootstrap_inference.csv"
+    boot_df.to_csv(deliv_boot_path, index=False)
+    logger.info(f"  Saved portfolio bootstrap inference -> {boot_path} and {deliv_boot_path}")
+
+    # 8. Save Tables
     out_table_path = config.OUT_TABLES / "portfolio_diversification_results.csv"
     comp_df.to_csv(out_table_path, index=False)
     deliv_table_path = config.DELIVERABLES / "portfolio_diversification_results.csv"

@@ -169,12 +169,12 @@ nckh/
 
 ### 1. Connectedness & Systemic Roles (2010–2026)
 
-- **Total Connectedness Index ($\text{TCI}$)** (Sample: Jan 4, 2010 – Jul 17, 2026):
-  - **Log Parkinson Range Volatility (Baseline)**: Full-sample $\text{TCI} = \mathbf{17.16\%}$. Rolling 250-day $\text{TCI}$ averages $\mathbf{20.04\%}$ (range: 3.21% – 56.03%).
-  - **Log Squared Returns**: Full-sample $\text{TCI} = \mathbf{9.27\%}$. Rolling 250-day mean $\text{TCI} = \mathbf{11.88\%}$.
+- **Total Connectedness Index ($\text{TCI}$)** (Sample: Jan 4, 2010 – Jun 29, 2026, $N=3,330$):
+  - **Log Parkinson Range Volatility (Baseline)**: Full-sample $\text{TCI} = \mathbf{17.22\%}$. Rolling 250-day $\text{TCI}$ averages $\mathbf{20.08\%}$ (range: 9.88% – 48.84%).
+  - **Log Squared Returns**: Full-sample $\text{TCI} = \mathbf{9.27\%}$. Rolling 250-day mean $\text{TCI} = \mathbf{11.89\%}$.
 - **Market Roles**:
-  - **Net Transmitters**: **Thailand** ($\text{Net} = +3.21\%$) and **Indonesia** ($\text{Net} = +2.74\%$).
-  - **Net Receivers**: **Singapore** ($\text{Net} = -2.98\%$), **Philippines** ($\text{Net} = -1.52\%$), and **Vietnam** ($\text{Net} = -0.95\%$).
+  - **Net Transmitters**: **Thailand** ($\text{Net} = +3.21\%$) and **Indonesia** ($\text{Net} = +2.80\%$).
+  - **Net Receivers**: **Singapore** ($\text{Net} = -2.91\%$), **Philippines** ($\text{Net} = -1.61\%$), and **Vietnam** ($\text{Net} = -0.96\%$).
   - **Sensitivity Note**: Vietnam's net spillover position is sensitive to the choice of volatility proxy ($\text{Net} = -0.72\%$ with Parkinson vs. $\text{Net} = +0.64\%$ with squared returns).
 
 ### 2. Event-Window Analysis (Moving-Block Bootstrap & Multiple Testing)
@@ -194,27 +194,32 @@ nckh/
 
 ### 3. Drivers of Connectedness (HAC Newey-West Multi-Specification Models)
 
-$$\text{TCI}_m = 16.38 + 0.962 \cdot \text{VIX}_m - 0.130 \cdot \text{GPR}_m + 0.120 \cdot \Delta\text{Oil}_m + 2.263 \cdot \Delta\text{DGS2\_pp}_m - 0.368 \cdot \Delta\text{Dollar}_m + 0.249 \cdot \Delta\text{S\&P500}_m$$
+$$\text{TCI}_m = 16.36 + 0.962 \cdot \text{VIX}_m - 0.130 \cdot \text{GPR}_m + 0.121 \cdot \Delta\text{Oil}_m + 2.222 \cdot \Delta\text{DGS2\_pp}_m - 0.370 \cdot \Delta\text{Dollar}_m + 0.245 \cdot \Delta\text{S\&P500}_m$$
 
-- **Global Financial Volatility ($\text{VIX}_m$)**: $\beta = \mathbf{+0.9621}$ ($z = +3.724, p < 0.001$, Standardized $\beta^* = \mathbf{+0.5567}$) — Dominant positive systemic spillover driver.
-- **Geopolitical Risk ($\text{GPR}_m$)**: $\beta = \mathbf{-0.1304}$ ($z = -4.438, p < 0.001$, Standardized $\beta^* = \mathbf{-0.4672}$) — Statistically significant negative coefficient (flight-to-safety / international decoupling).
-- **Oil Price Changes ($\Delta\text{Oil}_m$)**: $\beta = \mathbf{+0.1195}$ ($z = +2.153, p = 0.0314$, Standardized $\beta^* = \mathbf{+0.1248}$) — Statistically significant positive commodity driver.
-- **Robustness Specifications**:
-  - **Lagged Uncertainty ($\text{VIX}_{m-1}, \text{GPR}_{m-1}$)**: $\beta_{\text{lag\_VIX}} = +0.9297$ ($p < 0.001$), $\beta_{\text{lag\_GPR}} = -0.1244$ ($p < 0.001$), $R^2 = 0.4686$.
-  - **Log-Transformed GPR ($\ln\text{GPR}$)**: $\beta = -18.120$ ($p < 0.001$), $R^2 = 0.5125$.
-  - **Threat vs. Act Decomposition**: $\beta_{\text{threat}} = -0.0434$ ($p = 0.018$), $\beta_{\text{act}} = -0.0711$ ($p = 0.022$).
+- **Global Financial Volatility ($\text{VIX}_m$)**: $\beta = \mathbf{+0.9616}$ ($z = +3.718, p < 0.001$, Standardized $\beta^* = \mathbf{+0.5567}$) — Dominant positive systemic spillover driver.
+- **Geopolitical Risk ($\text{GPR}_m$)**: $\beta = \mathbf{-0.1300}$ ($z = -4.381, p < 0.001$, Standardized $\beta^* = \mathbf{-0.4672}$) — Statistically significant negative coefficient (flight-to-safety / international decoupling).
+- **Oil Price Changes ($\Delta\text{Oil}_m$)**: $\beta = \mathbf{+0.1213}$ ($z = +2.185, p = 0.0289$, Standardized $\beta^* = \mathbf{+0.1248}$) — Statistically significant positive commodity driver.
+- **GPR Diagnostic Suite**:
+  - **No Multicollinearity**: Regressor $\text{VIF} \in [1.089, 1.659]$ and $\text{Corr}(\text{VIX}, \text{GPR}) = 0.0372$.
+  - **Isolated Models**: $\text{VIX-only}$ ($R^2 = 0.2834, p < 0.001$) and $\text{GPR-only}$ ($R^2 = 0.1933, p < 0.001$).
+  - **Orthogonalized GPR**: $\beta_{\text{GPR}^{\perp}} = -0.1300$ ($p < 0.001$).
+  - **Differenced & AR(1) Models**: $\beta_{\Delta\text{VIX}} = +0.3291$ ($p = 0.010$) and AR(1) autoregressive $\rho = 0.8825$ ($p < 0.001, R^2 = 0.9294$).
 
 ### 4. Portfolio Diversification across Connectedness Regimes
 
 | Connectedness Regime | Mean $\text{TCI}$ | EW Ann. Vol. | GMV Ann. Vol. | GMV Risk Reduction | EW Diversification Ratio ($DR$) | GMV Diversification Ratio ($DR$) | GMV Expected Shortfall ($\text{ES}_{95}$) | Net Sharpe Ratio |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Full Sample** | 19.41% | 11.60% | 10.58% | 8.75% | 1.481 | 1.366 | -1.62% | 0.272 |
-| **Low TCI ($\le Q_{25}$)** | 9.27% | **9.66%** | **9.06%** | 6.18% | **1.592** | **1.459** | **-1.37%** | **0.915** |
-| **Moderate TCI ($Q_{25}$–$Q_{75}$)** | 17.40% | 10.88% | 10.10% | 7.15% | 1.482 | 1.363 | -1.54% | -0.440 |
-| **High TCI ($\ge Q_{75}$)** | 33.55% | **14.43%** | **12.71%** | **11.90%** | **1.368** | **1.276** | **-1.99%** | **0.954** |
-| **Crisis Peak ($\ge Q_{90}$)** | 45.69% | **17.27%** | **15.81%** | 8.46% | **1.266** | **1.228** | **-2.38%** | **1.459** |
+| **Full Sample** | 19.45% | 11.62% | 10.60% | 8.78% | 1.481 | 1.366 | -1.63% | 0.249 |
+| **Low TCI ($\le Q_{25}$)** | 9.28% | **9.66%** | **9.06%** | 6.28% | **1.593** | **1.460** | **-1.37%** | **0.841** |
+| **Moderate TCI ($Q_{25}$–$Q_{75}$)** | 17.45% | 10.89% | 10.11% | 7.16% | 1.482 | 1.364 | -1.55% | -0.467 |
+| **High TCI ($\ge Q_{75}$)** | 33.59% | **14.45%** | **12.73%** | **11.92%** | **1.368** | **1.276** | **-1.99%** | **0.972** |
+| **Crisis Peak ($\ge Q_{90}$)** | 45.79% | **17.32%** | **15.86%** | 8.43% | **1.265** | **1.229** | **-2.38%** | **1.461** |
 
-*Note: All differences between High- and Low-TCI regimes are statistically significant at $p < 0.0001$ ($F=2.23$ for EW variance, $F=1.97$ for GMV variance, $t=34.92$ for GMV $DR$). Net Sharpe ratio includes 10 bps round-trip transaction costs with daily drift.*
+- **Moving-Block Bootstrap Inference ($B=20$ days, 2,000 replications)**:
+  - $\Delta \sigma_{\text{EW}} = \mathbf{+4.93\%}$ ($95\%\text{ CI } [0.85, 10.07], p = 0.009$)
+  - $\Delta \sigma_{\text{GMV}} = \mathbf{+3.81\%}$ ($95\%\text{ CI } [0.65, 7.79], p = 0.018$)
+  - $\Delta DR = \mathbf{-0.189}$ ($95\%\text{ CI } [-0.23, -0.14], p < 0.001$)
+  - $\Delta \text{ES}_{95} = \mathbf{-0.63\%}$ ($95\%\text{ CI } [-1.49, 0.07], p = 0.091$)
 
 ---
 

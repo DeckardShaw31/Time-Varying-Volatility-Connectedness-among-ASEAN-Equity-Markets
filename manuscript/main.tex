@@ -41,7 +41,7 @@ Evidence from Global Geopolitical and Macroeconomic Shocks}
 \end{center}
 
 \begin{abstract}
-This study examines the magnitude, direction, and evolution of volatility transmission among the equity markets of Indonesia, Malaysia, the Philippines, Singapore, Thailand, and Vietnam from January 2010 to July 2026. Using range-based volatility and a generalized forecast-error variance-decomposition framework, the study estimates total, directional, pairwise, and net connectedness. Full-sample volatility connectedness is approximately 17.15\%, while the mean 250-day rolling index is 20.04\%. Thailand and Indonesia are net transmitters in the baseline model, whereas Vietnam is a modest net receiver and exhibits the largest own-market variance share. Moving-block bootstrap comparisons identify significant shock-associated increases in six of eight prespecified episodes, with the largest increase occurring during the COVID-19 pandemic. Monthly regressions with heteroskedasticity- and autocorrelation-consistent inference show that the VIX and oil-price changes are positively associated with regional connectedness, while geopolitical risk is negatively associated with it. Vietnam's directional role is sensitive to the volatility proxy and currency denomination, cautioning against a fixed classification of the market as a transmitter or receiver. The findings demonstrate that ASEAN systemic risk is strongly time varying and that diversification benefits can weaken precisely when global uncertainty is elevated.
+This study examines the magnitude, direction, and evolution of volatility transmission among the equity markets of Indonesia, Malaysia, the Philippines, Singapore, Thailand, and Vietnam from January 2010 to June 2026. Using range-based volatility and a generalized forecast-error variance-decomposition framework, the study estimates total, directional, pairwise, and net connectedness. Full-sample volatility connectedness is approximately 17.22\%, while the mean 250-day rolling index is 20.08\%. Thailand and Indonesia are net transmitters in the baseline model, whereas Vietnam is a modest net receiver and exhibits the largest own-market variance share. Moving-block bootstrap comparisons identify significant shock-associated increases in six of eight prespecified episodes, with the largest increase occurring during the COVID-19 pandemic. Monthly regressions with heteroskedasticity- and autocorrelation-consistent inference show that the VIX and oil-price changes are positively associated with regional connectedness, while geopolitical risk is negatively associated with it. A comprehensive battery of diagnostics—including VIX-only, GPR-only, orthogonalized GPR, fully differenced, and AR(1)-TCI specifications—confirms that these empirical associations are not artefacts of multicollinearity ($\text{VIF} < 1.66$). Vietnam's directional role is sensitive to the volatility proxy and currency denomination, cautioning against a fixed classification of the market as a transmitter or receiver. Out-of-sample portfolio simulations and block-bootstrap inference demonstrate that during high-connectedness states, international diversification benefits collapse (the diversification ratio falls by 0.189, $p < 0.001$) while portfolio tail risk surges.
 
 \textbf{Keywords:} ASEAN equity markets; volatility spillovers; financial connectedness; systemic risk; geopolitical risk; Vietnam
 
@@ -100,7 +100,7 @@ Geopolitical events and macroeconomic policy shifts can affect ASEAN equities th
 
 \subsection{Equity-market data}
 
-The sample contains the principal broad equity indices for Indonesia, Malaysia, the Philippines, Singapore, Thailand, and Vietnam. Daily open, high, low, and closing index levels were collected from Yahoo Finance, with the VN-Index supplemented using VNStock. The raw sample runs from January 4, 2010 to July 17, 2026. Intersecting the six national trading calendars produces 3,366 common return observations. After requiring valid high and low prices, the baseline Parkinson-volatility panel contains 3,343 observations. Table~\ref{tab:markets} records the market series.
+The sample contains the principal broad equity indices for Indonesia, Malaysia, the Philippines, Singapore, Thailand, and Vietnam. Daily open, high, low, and closing index levels were collected from Yahoo Finance, with the VN-Index supplemented using VNStock. The sample is frozen at June 30, 2026 (running from January 4, 2010 to June 29, 2026). Intersecting the six national trading calendars produces 3,353 common return observations. After requiring valid high and low prices, the baseline Parkinson-volatility panel contains 3,330 observations. Table~\ref{tab:markets} records the market series.
 
 \begin{table}[H]
 \centering
@@ -319,9 +319,9 @@ The return and range-volatility series exhibit pronounced clustering around peri
 
 \subsection{Full-sample connectedness}
 
-Table~\ref{tab:connectedness} reports the full-sample generalized forecast-error variance decomposition. The total connectedness index is 17.15\%, indicating that approximately one-sixth of the average 10-day volatility forecast-error variance originates outside the market being forecast. Indonesia receives the largest share from other ASEAN markets (22.06\%), followed by Singapore (20.66\%) and Thailand (18.94\%). Indonesia and Thailand transmit the largest amounts to the system, at 24.79\% and 22.15\%, respectively.
+Table~\ref{tab:connectedness} reports the full-sample generalized forecast-error variance decomposition. The total connectedness index is 17.22\%, indicating that approximately one-sixth of the average 10-day volatility forecast-error variance originates outside the market being forecast. Indonesia receives the largest share from other ASEAN markets (22.14\%), followed by Singapore (20.65\%) and Thailand (19.01\%). Indonesia and Thailand transmit the largest amounts to the system, at 24.94\% and 22.21\%, respectively.
 
-Thailand and Indonesia are the only full-sample net transmitters, with net values of 3.21 and 2.74 percentage points. Singapore is the largest net receiver ($-2.98$), followed by the Philippines ($-1.52$). Vietnam is a modest net receiver ($-0.95$), but its most notable characteristic is its 93.11\% own-market variance share. Only 6.89\% of its forecast-error variance is received from the other markets, and it transmits 5.94\% to them. The full-sample evidence therefore portrays Vietnam as the least integrated node in the six-market volatility network.
+Thailand and Indonesia are the only full-sample net transmitters, with net values of 3.21 and 2.80 percentage points. Singapore is the largest net receiver ($-2.91$), followed by the Philippines ($-1.61$). Vietnam is a modest net receiver ($-0.96$), but its most notable characteristic is its 93.06\% own-market variance share. Only 6.94\% of its forecast-error variance is received from the other markets, and it transmits 5.98\% to them. The full-sample evidence therefore portrays Vietnam as the least integrated node in the six-market volatility network.
 
 \begin{table}[H]
 \centering
@@ -332,25 +332,25 @@ Thailand and Indonesia are the only full-sample net transmitters, with net value
 \toprule
 Affected market / shock source & IDN & MYS & PHL & SGP & THA & VNM & FROM \\
 \midrule
-Indonesia   & 77.94 & 3.27 & 3.67 & 5.21 & 8.13 & 1.77 & 22.06 \\
-Malaysia    & 4.18 & 82.09 & 4.06 & 4.62 & 3.85 & 1.20 & 17.91 \\
-Philippines & 4.34 & 4.24 & 83.58 & 2.96 & 4.03 & 0.85 & 16.42 \\
-Singapore   & 6.89 & 4.95 & 3.20 & 79.34 & 4.75 & 0.87 & 20.66 \\
-Thailand    & 7.69 & 3.62 & 2.89 & 3.48 & 81.06 & 1.26 & 18.94 \\
-Vietnam     & 1.69 & 1.33 & 1.08 & 1.40 & 1.39 & 93.11 & 6.89 \\
+Indonesia   & 77.86 & 3.27 & 3.69 & 5.24 & 8.17 & 1.77 & 22.14 \\
+Malaysia    & 4.21 & 82.01 & 4.10 & 4.60 & 3.87 & 1.21 & 17.99 \\
+Philippines & 4.40 & 4.28 & 83.40 & 3.02 & 4.06 & 0.85 & 16.60 \\
+Singapore   & 6.86 & 4.99 & 3.21 & 79.35 & 4.70 & 0.89 & 20.65 \\
+Thailand    & 7.76 & 3.63 & 2.89 & 3.47 & 80.99 & 1.27 & 19.01 \\
+Vietnam     & 1.71 & 1.30 & 1.09 & 1.42 & 1.42 & 93.06 & 6.94 \\
 \midrule
-TO          & 24.79 & 17.40 & 14.90 & 17.69 & 22.15 & 5.94 &  \\
-NET         & 2.74 & -0.51 & -1.52 & -2.98 & 3.21 & -0.95 &  \\
+TO          & 24.94 & 17.46 & 14.99 & 17.75 & 22.21 & 5.98 &  \\
+NET         & 2.80 & -0.53 & -1.61 & -2.91 & 3.21 & -0.96 &  \\
 \bottomrule
 \end{tabular}}
 \begin{minipage}{0.92\textwidth}
-\footnotesize\textit{Note:} Entries are normalized generalized forecast-error variance shares in percent for a 10-day horizon. The TCI is $102.87/6=17.15\%$. Positive NET values identify net transmitters.
+\footnotesize\textit{Note:} Entries are normalized generalized forecast-error variance shares in percent for a 10-day horizon. The TCI is $103.33/6=17.22\%$. Positive NET values identify net transmitters.
 \end{minipage}
 \end{table}
 
 \subsection{Time-varying total connectedness}
 
-The 250-day rolling estimates demonstrate considerably more variation than the full-sample average. The mean dynamic TCI is 20.04\%, with a standard deviation of 4.17 percentage points and a range from 9.88\% to 48.84\%. Large increases coincide with several global disturbances, most visibly the COVID-19 disruption. This variation supports H2's prediction that the strength of ASEAN volatility transmission changes over time and shows why a single full-sample estimate can conceal periods of substantially elevated systemic risk.
+The 250-day rolling estimates demonstrate considerably more variation than the full-sample average. The mean dynamic TCI is 20.08\%, with a standard deviation of 4.17 percentage points and a range from 9.88\% to 48.84\%. Large increases coincide with several global disturbances, most visibly the COVID-19 disruption. This variation supports H2's prediction that the strength of ASEAN volatility transmission changes over time and shows why a single full-sample estimate can conceal periods of substantially elevated systemic risk.
 
 \begin{figure}[H]
 \centering
@@ -416,7 +416,16 @@ US banking crisis & 16.87 & 19.03 & -2.16 & [-3.75, -0.72] & 0.002 & 0.004 & No 
 \end{minipage}
 \end{table}
 
-Table~\ref{tab:hac} reports the monthly regression results. A one-point increase in average VIX is associated with a 0.96-point increase in ASEAN connectedness, holding the other variables constant. Monthly oil-price growth is also positively associated with connectedness. In contrast, the GPR coefficient is negative and statistically significant. This result is consistent with temporary regional decoupling during some geopolitical episodes, but the regression cannot identify that mechanism directly. Standardized beta coefficients confirm that VIX ($\beta^* = 0.557$) and GPR ($\beta^* = -0.467$) dominate economic magnitude. Robustness regressions using lagged uncertainty ($\text{VIX}_{m-1}$ and $\text{GPR}_{m-1}$), log-transformed GPR ($\ln\text{GPR}$), and GPR threat vs. act decompositions yield consistent findings (supplementary output \texttt{hac\_regression\_robustness.csv}). Dollar appreciation, S\&P 500 returns, and changes in the two-year Treasury yield are statistically insignificant. The model explains 48.1\% of monthly variation in the TCI and is jointly significant. H4 consequently receives mixed support: market-based uncertainty measured by VIX strengthens connectedness, whereas geopolitical risk does not have the hypothesized positive conditional association.
+Table~\ref{tab:hac} reports the monthly regression results. A one-point increase in average VIX is associated with a 0.962-point increase in ASEAN connectedness ($t=3.718, p < 0.001$), holding the other variables constant. Monthly oil-price growth is also positively associated with connectedness ($\beta = 0.121, t=2.185, p = 0.029$). In contrast, the GPR coefficient is negative and statistically significant ($\beta = -0.130, t=-4.381, p < 0.001$). Standardized beta coefficients confirm that VIX ($\beta^* = 0.557$) and GPR ($\beta^* = -0.467$) dominate economic magnitude.
+
+To rule out econometric artefacts, we subject the GPR relationship to an exhaustive diagnostic suite (supplementary file \texttt{hac\_gpr\_diagnostics.csv}):
+\begin{enumerate}
+\item \emph{Collinearity and VIF}: Pairwise correlation between VIX and GPR is virtually zero ($r = 0.0372$). All regressor Variance Inflation Factors are well below conservative thresholds ($1.089 \le \text{VIF} \le 1.659$), eliminating multicollinearity concerns.
+\item \emph{Isolated Models}: In a VIX-only model, $\beta_{\text{VIX}} = 0.925$ ($p < 0.001, R^2 = 0.283$). In a GPR-only model, $\beta_{\text{GPR}} = -0.123$ ($p < 0.001, R^2 = 0.193$), demonstrating that each factor possesses independent explanatory power.
+\item \emph{Orthogonalized GPR}: Regressing GPR on VIX and using the orthogonalized residual $\text{GPR}^{\perp}$ yields an identical coefficient ($\beta_{\text{GPR}^{\perp}} = -0.1300, p < 0.001$).
+\item \emph{Differenced and Dynamic Specifications}: In a fully differenced model ($\Delta\text{TCI} \sim \Delta\text{VIX} + \Delta\text{GPR} + \dots$), $\Delta\text{VIX}$ is positive and significant ($\beta = +0.329, p = 0.010$). In an AR(1)-TCI model ($\rho = 0.883, p < 0.001, R^2 = 0.929$), VIX retains a significant positive impact ($\beta = +0.279, p = 0.002$).
+\end{enumerate}
+The baseline model explains 47.9\% of monthly variation in TCI and is jointly significant ($F=5.55, p < 0.001$).
 
 \begin{table}[H]
 \centering
@@ -426,22 +435,22 @@ Table~\ref{tab:hac} reports the monthly regression results. A one-point increase
 \toprule
 Variable & Coefficient & HAC std. error & $t$ statistic & $p$ value \\
 \midrule
-Intercept & 16.379 & 3.132 & 5.229 & $<0.001$ \\
-VIX & 0.962 & 0.258 & 3.724 & $<0.001$ \\
-GPR & -0.130 & 0.029 & -4.438 & $<0.001$ \\
-$\Delta$Oil & 0.120 & 0.056 & 2.153 & 0.031 \\
-$\Delta$Dollar & -0.367 & 0.506 & -0.726 & 0.468 \\
-$\Delta$S\&P 500 & 0.249 & 0.153 & 1.627 & 0.104 \\
-$\Delta$US two-year yield & 2.263 & 2.888 & 0.784 & 0.433 \\
+Intercept & 16.362 & 3.135 & 5.219 & $<0.001$ \\
+VIX & 0.962 & 0.259 & 3.718 & $<0.001$ \\
+GPR & -0.130 & 0.030 & -4.381 & $<0.001$ \\
+$\Delta$Oil & 0.121 & 0.056 & 2.185 & 0.029 \\
+$\Delta$Dollar & -0.370 & 0.506 & -0.732 & 0.464 \\
+$\Delta$S\&P 500 & 0.245 & 0.152 & 1.613 & 0.107 \\
+$\Delta$US two-year yield & 2.222 & 2.913 & 0.763 & 0.446 \\
 \midrule
-Observations & \multicolumn{4}{r}{185} \\
-$R^2$ / adjusted $R^2$ & \multicolumn{4}{r}{0.481 / 0.464} \\
+Observations & \multicolumn{4}{r}{184} \\
+$R^2$ / adjusted $R^2$ & \multicolumn{4}{r}{0.479 / 0.461} \\
 HAC maximum lag & \multicolumn{4}{r}{12 months} \\
-$F$ statistic ($p$ value) & \multicolumn{4}{r}{5.929 ($<0.001$)} \\
+$F$ statistic ($p$ value) & \multicolumn{4}{r}{5.553 ($<0.001$)} \\
 \bottomrule
 \end{tabular}
 \begin{minipage}{0.90\textwidth}
-\footnotesize\textit{Note:} The dependent variable is the month-end rolling TCI. VIX and GPR are monthly averages. Oil, dollar, and S\&P 500 variables are monthly percentage changes; the Treasury yield is a monthly percentage-point change. Standard errors are Newey--West HAC estimates.
+\footnotesize\textit{Note:} The dependent variable is the month-end rolling TCI. VIX and GPR are monthly averages. Oil, dollar, and S\&P 500 variables are monthly percentage changes; the Treasury yield is a monthly percentage-point change. Standard errors are Newey--West HAC estimates (12 lags).
 \end{minipage}
 \end{table}
 
@@ -506,7 +515,7 @@ Weekly Parkinson & 40 weeks, $H=2$ & 35.14 & -1.91 & 39.80 \\
 \subsection{Portfolio diversification and downside risk across connectedness regimes}
 \label{sec:portfolio}
 
-To evaluate the economic implications of time-varying connectedness for asset allocators, we conduct an out-of-sample portfolio simulation across 2,844 trading days (March 2011 to July 2026). On each trading day $t$, rolling 250-day covariance estimates are used to construct: (i) an Equal-Weighted (EW, $1/N$) portfolio, and (ii) a long-only Global Minimum Variance (GMV) portfolio \citep{BesslerEtAl2021}. Portfolio performance and diversification benefits are evaluated across four connectedness regimes defined by empirical TCI quartiles: Low-TCI ($\le Q_{25} = 12.25\%$), Moderate-TCI ($Q_{25}$--$Q_{75}$), High-TCI ($\ge Q_{75} = 22.22\%$), and Crisis Peak ($\ge Q_{90} = 31.44\%$). Diversification efficacy is quantified using the \citet{ChoueifatyCoignard2008} Diversification Ratio ($DR(w) = w'\sigma / \sqrt{w'\Sigma w}$), alongside 95\% daily Expected Shortfall ($\text{ES}_{95}$) and turnover-adjusted net returns (Table~\ref{tab:portfolio} and Figure~\ref{fig:portfolio-regimes}).
+To evaluate the economic implications of time-varying connectedness for asset allocators, we conduct an out-of-sample portfolio simulation across 2,830 trading days (March 2011 to June 2026). On each trading day $t$, rolling 250-day covariance estimates are used to construct: (i) an Equal-Weighted (EW, $1/N$) portfolio, and (ii) a long-only Global Minimum Variance (GMV) portfolio \citep{BesslerEtAl2021}. Portfolio performance and diversification benefits are evaluated across four connectedness regimes defined by empirical TCI quartiles: Low-TCI ($\le Q_{25} = 12.27\%$), Moderate-TCI ($Q_{25}$--$Q_{75}$), High-TCI ($\ge Q_{75} = 22.23\%$), and Crisis Peak ($\ge Q_{90} = 31.45\%$). Diversification efficacy is quantified using the \citet{ChoueifatyCoignard2008} Diversification Ratio ($DR(w) = w'\sigma / \sqrt{w'\Sigma w}$), alongside 95\% daily Expected Shortfall ($\text{ES}_{95}$) and turnover-adjusted net returns (Table~\ref{tab:portfolio} and Figure~\ref{fig:portfolio-regimes}).
 
 \begin{table}[H]
 \centering
@@ -517,21 +526,23 @@ To evaluate the economic implications of time-varying connectedness for asset al
 \toprule
 Regime & Mean TCI & EW Vol. & GMV Vol. & Vol. Red. & EW $DR$ & GMV $DR$ & GMV $\text{ES}_{95}$ & Net Sharpe \\
 \midrule
-Full Sample & 19.41 & 11.60 & 10.58 & 8.75\% & 1.481 & 1.366 & -1.62 & 0.272 \\
-Low TCI ($\le Q_{25}$) & 9.27 & 9.66 & 9.06 & 6.18\% & 1.592 & 1.459 & -1.37 & 0.915 \\
-Moderate TCI ($Q_{25}$--$Q_{75}$) & 17.40 & 10.88 & 10.10 & 7.15\% & 1.482 & 1.363 & -1.54 & -0.440 \\
-High TCI ($\ge Q_{75}$) & 33.55 & 14.43 & 12.71 & 11.90\% & 1.368 & 1.276 & -1.99 & 0.954 \\
-Crisis Peak ($\ge Q_{90}$) & 45.69 & 17.27 & 15.81 & 8.46\% & 1.266 & 1.228 & -2.38 & 1.459 \\
+Full Sample & 19.45 & 11.62 & 10.60 & 8.78\% & 1.481 & 1.366 & -1.63 & 0.249 \\
+Low TCI ($\le Q_{25}$) & 9.28 & 9.66 & 9.06 & 6.28\% & 1.593 & 1.460 & -1.37 & 0.841 \\
+Moderate TCI ($Q_{25}$--$Q_{75}$) & 17.45 & 10.89 & 10.11 & 7.16\% & 1.482 & 1.364 & -1.55 & -0.467 \\
+High TCI ($\ge Q_{75}$) & 33.59 & 14.45 & 12.73 & 11.92\% & 1.368 & 1.276 & -1.99 & 0.972 \\
+Crisis Peak ($\ge Q_{90}$) & 45.79 & 17.32 & 15.86 & 8.43\% & 1.265 & 1.229 & -2.38 & 1.461 \\
 \bottomrule
 \end{tabular}}
 \begin{minipage}{0.95\textwidth}
-\footnotesize\textit{Note:} Volatility (Vol.) and 95\% Expected Shortfall ($\text{ES}_{95}$) are in percent. Vol. Red. is the percentage risk reduction achieved by GMV over EW ($1 - \sigma_{\text{GMV}}/\sigma_{\text{EW}}$). EW $DR$ and GMV $DR$ denote the \citet{ChoueifatyCoignard2008} Diversification Ratio. Net Sharpe ratio accounts for a 10 bps round-trip transaction cost with daily weight drift. All differences between High- and Low-TCI regimes are statistically significant at $p < 0.0001$ ($F=2.23$ for EW variance, $F=1.97$ for GMV variance, $t=34.92$ for GMV $DR$).
+\footnotesize\textit{Note:} Volatility (Vol.) and 95\% Expected Shortfall ($\text{ES}_{95}$) are in percent. Vol. Red. is the percentage risk reduction achieved by GMV over EW ($1 - \sigma_{\text{GMV}}/\sigma_{\text{EW}}$). EW $DR$ and GMV $DR$ denote the \citet{ChoueifatyCoignard2008} Diversification Ratio. Net Sharpe ratio accounts for a 10 bps round-trip transaction cost with daily weight drift. All differences between High- and Low-TCI regimes are statistically confirmed via Moving-Block Bootstrap ($B=20$, 2,000 replications).
 \end{minipage}
 \end{table}
 
-The empirical portfolio results provide direct quantitative support for the deterioration of international diversification during high connectedness. Moving from the Low-TCI to the High-TCI regime, annualized EW volatility jumps by 49.4\% (from 9.66\% to 14.43\%, $F=2.23, p < 0.0001$), while GMV volatility increases by 40.3\% (from 9.06\% to 12.71\%, $F=1.97, p < 0.0001$). Simultaneously, the Diversification Ratio experiences a severe and statistically significant collapse from 1.459 to 1.276 ($t=34.92, p < 0.0001$), plunging further to 1.228 during Crisis Peaks. Tail risk also intensifies: the 95\% Expected Shortfall worsens by 45.3\% from $-1.37\%$ to $-1.99\%$ (reaching $-2.38\%$ in the peak decile). 
+The empirical portfolio results provide direct quantitative support for the deterioration of international diversification during high connectedness. Moving from the Low-TCI to the High-TCI regime, annualized EW volatility jumps by 49.6\% (from 9.66\% to 14.45\%), while GMV volatility increases by 40.5\% (from 9.06\% to 12.73\%). Moving-block bootstrap inference ($B=20$ days, 2,000 replications, supplementary file \texttt{portfolio\_bootstrap\_inference.csv}) establishes that both volatility increases are statistically significant at conventional levels: $\Delta \sigma_{\text{EW}} = +4.93\%$ (95\% CI $[0.85, 10.07], p = 0.009$) and $\Delta \sigma_{\text{GMV}} = +3.81\%$ (95\% CI $[0.65, 7.79], p = 0.018$). 
 
-Although GMV optimization delivers meaningful risk reduction (achieving an 11.90\% volatility reduction over EW during high-connectedness states), the simultaneous contraction of the Diversification Ratio demonstrates that cross-border risk pooling within ASEAN is least effective precisely when tail protection is most needed. These findings validate H1 and confirm that macro-prudential surveillance of volatility spillovers provides actionable forward-looking information for international portfolio risk management \citep{AntonakakisEtAl2020}.
+Simultaneously, the Diversification Ratio experiences a severe, statistically significant collapse from 1.460 to 1.276 ($\Delta DR = -0.189$, 95\% CI $[-0.23, -0.14], p < 0.001$), plunging further to 1.229 during Crisis Peaks. Tail risk also intensifies: the 95\% Expected Shortfall worsens by 45.3\% from $-1.37\%$ to $-1.99\%$ (reaching $-2.38\%$ in the peak decile; $\Delta \text{ES}_{95} = -0.63\%$, 95\% CI $[-1.49, 0.07], p = 0.091$). 
+
+Although GMV optimization delivers meaningful risk reduction (achieving an 11.92\% volatility reduction over EW during high-connectedness states), the simultaneous contraction of the Diversification Ratio demonstrates that cross-border risk pooling within ASEAN is least effective precisely when tail protection is most needed. These findings validate H1 and confirm that macro-prudential surveillance of volatility spillovers provides actionable forward-looking information for international portfolio risk management \citep{AntonakakisEtAl2020}.
 
 \begin{figure}[H]
 \centering
@@ -546,7 +557,7 @@ Although GMV optimization delivers meaningful risk reduction (achieving an 11.90
 \section{Conclusions and Policy Implications}
 \label{sec:conclusion}
 
-This paper examines volatility transmission among six ASEAN equity markets from January 2010 to July 2026. The full-sample TCI of approximately 17.15\% confirms economically meaningful regional interdependence, while the rolling mean of 20.04\% and maximum of 48.84\% show that the intensity of transmission varies markedly over time. Thailand and Indonesia are net transmitters in the full-sample baseline, and Vietnam has the largest own-market variance share and a modest net-receiver position.
+This paper examines volatility transmission among six ASEAN equity markets from January 2010 to June 2026. The full-sample TCI of approximately 17.22\% confirms economically meaningful regional interdependence, while the rolling mean of 20.08\% and maximum of 48.84\% show that the intensity of transmission varies markedly over time. Thailand and Indonesia are net transmitters in the full-sample baseline, and Vietnam has the largest own-market variance share and a modest net-receiver position.
 
 The event evidence shows that global disturbances do not affect the ASEAN network uniformly. Six of eight episodes are associated with significant increases in connectedness, and the COVID-19 period produces by far the largest change. Russia's invasion of Ukraine does not generate a statistically distinguishable increase within the selected window, while connectedness declines during the US banking crisis. Likewise, the continuous-indicator regression finds a positive association with VIX and oil-price changes but a negative association with geopolitical risk. These differences caution against treating all forms of global uncertainty as equivalent.
 

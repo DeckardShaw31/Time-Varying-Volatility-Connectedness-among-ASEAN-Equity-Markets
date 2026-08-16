@@ -34,8 +34,9 @@ def clean_asean_data(df: pd.DataFrame) -> pd.DataFrame:
     """Clean the raw ASEAN indices data."""
     logger.info("Cleaning ASEAN index data ...")
 
-    # 1. Convert dates
+    # 1. Convert dates and enforce sample boundaries
     df["date"] = pd.to_datetime(df["date"])
+    df = df[(df["date"] >= config.START_DATE) & (df["date"] <= config.END_DATE)].copy()
     df = df.sort_values(["country", "date"]).reset_index(drop=True)
 
     # 2. Remove duplicate dates within each country
@@ -195,8 +196,9 @@ def clean_global_daily(path: Path) -> pd.DataFrame:
     df.index.name = "date"
     df = df.sort_index()
 
-    # Remove duplicate dates
+    # Remove duplicate dates and filter date range
     df = df[~df.index.duplicated(keep="last")]
+    df = df[(df.index >= config.START_DATE) & (df.index <= config.END_DATE)].copy()
 
     # Convert to numeric
     for col in df.columns:
@@ -218,6 +220,7 @@ def clean_exchange_rates(path: Path) -> pd.DataFrame:
 
     logger.info("Cleaning exchange-rate data ...")
     df = pd.read_csv(path, parse_dates=["date"])
+    df = df[(df["date"] >= config.START_DATE) & (df["date"] <= config.END_DATE)].copy()
     df = df.sort_values(["country", "date"]).reset_index(drop=True)
     df = df.drop_duplicates(subset=["country", "date"], keep="last")
 

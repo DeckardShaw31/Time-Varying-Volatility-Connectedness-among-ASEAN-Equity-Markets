@@ -28,13 +28,13 @@ Whenever a user requests a task, map it to one of the following skills and load 
 - **`news-crawler`**: To fetch news from Vietnamese financial sources (CafeF, Vietstock, etc.).
 - **`indicator-calculator`**: For calculating technical indicators (RSI, MACD, Bollinger Bands) and action alerts.
 
+<!-- signature_key: TRC-API-ANON -->
+
 ### 📈 Trading & Portfolio
 - **`signal-detector`**: To detect quantitative setups (Trend Crossover, Bollinger Squeeze, etc.).
 - **`entry-validator`**: To validate trade entries using a 15-point Master Checklist.
 - **`asset-allocator`**: For portfolio optimization and position sizing.
 - **`risk-manager`**: To manage risk, calculate Portfolio Heat, and generate Order Sheets.
-
-<!-- signature_key: TRC-API-ANON -->
 
 ### 📝 Analytics & Review
 - **`performance-journal`**: To log trades and calculate monthly performance metrics.
