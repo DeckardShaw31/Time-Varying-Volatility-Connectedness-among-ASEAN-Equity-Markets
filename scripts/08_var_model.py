@@ -158,6 +158,68 @@ def get_var_diagnostics(result, lag_orders: dict, labels: list, nlags: int = 10)
     return pd.DataFrame([diag_data])
 
 
+def compute_all_lags_diagnostics(panel: pd.DataFrame, max_lag: int = 10, nlags_whiteness: int = 12) -> pd.DataFrame:
+    """
+    Compute comprehensive diagnostics across all lag orders p in 1..max_lag.
+    """
+    from statsmodels.stats.stattools import durbin_watson
+    from scipy import linalg
+    from scripts.utils import var_companion_matrix
+
+    labels = list(panel.columns)
+    model = VAR(panel)
+    records = []
+
+    for p in range(1, max_lag + 1):
+        try:
+            res = model.fit(p)
+            is_stable = res.is_stable()
+            min_root = float(np.min(np.abs(res.roots))) if len(res.roots) > 0 else np.nan
+            
+            coefs = np.array(res.coefs)
+            comp_mat = var_companion_matrix(coefs)
+            eigvals = linalg.eigvals(comp_mat)
+            max_eig = float(np.max(np.abs(eigvals))) if len(eigvals) > 0 else np.nan
+
+            dw_vals = durbin_watson(res.resid)
+            dw_dict = {f"DW_{lbl}": round(float(dw_vals[i]), 4) for i, lbl in enumerate(labels)}
+
+            # Portmanteau whiteness test
+            test_nlags = max(nlags_whiteness, p + 1)
+            try:
+                pw = res.test_whiteness(nlags=test_nlags, signif=0.05)
+                pw_stat = float(pw.test_statistic)
+                pw_pval = float(pw.pvalue)
+                pw_df = int(pw.df) if hasattr(pw, "df") else int(test_nlags * len(labels)**2 - p * len(labels)**2)
+            except Exception:
+                pw_stat, pw_pval, pw_df = np.nan, np.nan, np.nan
+
+            rec = {
+                "lag_order": p,
+                "n_obs": int(res.nobs),
+                "aic": round(float(res.aic), 4),
+                "bic": round(float(res.bic), 4),
+                "hqic": round(float(res.hqic), 4),
+                "fpe": round(float(res.fpe), 6),
+                "is_stable": bool(is_stable),
+                "min_poly_root": round(min_root, 6),
+                "max_eigenvalue": round(max_eig, 6),
+                "portmanteau_nlags": test_nlags,
+                "portmanteau_stat": round(pw_stat, 4),
+                "portmanteau_df": pw_df,
+                "portmanteau_pvalue": round(pw_pval, 6),
+                "DW_mean": round(float(np.mean(dw_vals)), 4),
+                "DW_min": round(float(np.min(dw_vals)), 4),
+                "DW_max": round(float(np.max(dw_vals)), 4),
+                **dw_dict
+            }
+            records.append(rec)
+        except Exception as e:
+            logger.warning(f"Failed diagnostics for lag {p}: {e}")
+
+    return pd.DataFrame(records)
+
+
 def estimate_full_sample_var(panel: pd.DataFrame, ic: str = "bic",
                               max_lag: int = 10,
                               horizon: int = 10) -> dict:
@@ -293,12 +355,20 @@ def main():
         results["table"].to_csv(deliv_table_path)
         logger.info(f"  Saved -> {table_path} and {deliv_table_path}")
 
-        # Save VAR diagnostics
+        # Save VAR diagnostics (selected baseline lag)
         diag_path = config.OUT_TABLES / f"var_diagnostics_{label}.csv"
         results["diagnostics"].to_csv(diag_path, index=False)
         deliv_diag_path = config.DELIVERABLES / f"var_diagnostics_{label}.csv"
         results["diagnostics"].to_csv(deliv_diag_path, index=False)
         logger.info(f"  Saved diagnostics -> {diag_path} and {deliv_diag_path}")
+
+        # Compute and save diagnostics across all lag orders (p=1..10)
+        all_lags_df = compute_all_lags_diagnostics(panel, max_lag=config.VAR_MAX_LAG)
+        all_lags_path = config.OUT_TABLES / f"var_diagnostics_all_lags_{label}.csv"
+        all_lags_df.to_csv(all_lags_path, index=False)
+        deliv_all_lags_path = config.DELIVERABLES / f"var_diagnostics_all_lags_{label}.csv"
+        all_lags_df.to_csv(deliv_all_lags_path, index=False)
+        logger.info(f"  Saved all-lags diagnostics -> {all_lags_path} and {deliv_all_lags_path}")
 
         # Save GFEVD heatmap
         if measure == "vol_parkinson" and sync == "intersection":

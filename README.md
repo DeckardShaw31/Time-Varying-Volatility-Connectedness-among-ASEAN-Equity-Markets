@@ -154,8 +154,13 @@ nckh/
   - **GARCH-Filtered EWMA**: Fits univariate GARCH(1,1) models to daily stock return series (%) and computes time-varying conditional market correlations ($\lambda = 0.94$).
 - **Outputs**: `outputs/tables/robustness_summary.csv`, `outputs/tables/robustness_alternative_lags.csv`, and `outputs/results/garch_ewma_correlations_*.csv`.
 
-#### `scripts/generate_manuscript_results.py` — *Stage 12: Single-Source-of-Truth Dataset Generator*
-- **Role**: Compiles every single empirical number, test statistic, diagnostic, regression estimate, and robustness cell into a single authoritative master dataset.
+#### `scripts/12_portfolio_diversification.py` — *Stage 12: Portfolio Diversification across Connectedness Regimes*
+- **Role**: Directly evaluates out-of-sample portfolio risk and diversification benefits across Low-TCI ($\le Q_{25}$), Moderate-TCI, and High-TCI ($\ge Q_{75}$) regimes.
+- **Implementation**: Simulates rolling 250-day Equal-Weighted (1/N) and Global Minimum Variance (GMV) allocations, computing realized volatility, Choueifaty & Coignard (2008) Diversification Ratios ($DR$), 95% Expected Shortfall ($\text{ES}_{95}$), and net performance after 10 bps transaction costs.
+- **Outputs**: `outputs/tables/portfolio_diversification_results.csv`, `outputs/tables/portfolio_regime_comparison.csv`, and `outputs/figures/portfolio_diversification_regimes.png`.
+
+#### `scripts/generate_manuscript_results.py` — *Stage 13: Single-Source-of-Truth Dataset Generator*
+- **Role**: Compiles every single empirical number, test statistic, diagnostic, regression estimate, robustness cell, and portfolio metric into a single authoritative master dataset.
 - **Outputs**: `deliverables/manuscript_results.json` and `deliverables/manuscript_results.csv` (as well as mirrored in `outputs/`).
 
 ---
@@ -199,6 +204,18 @@ $$\text{TCI}_m = 16.38 + 0.962 \cdot \text{VIX}_m - 0.130 \cdot \text{GPR}_m + 0
   - **Log-Transformed GPR ($\ln\text{GPR}$)**: $\beta = -18.120$ ($p < 0.001$), $R^2 = 0.5125$.
   - **Threat vs. Act Decomposition**: $\beta_{\text{threat}} = -0.0434$ ($p = 0.018$), $\beta_{\text{act}} = -0.0711$ ($p = 0.022$).
 
+### 4. Portfolio Diversification across Connectedness Regimes
+
+| Connectedness Regime | Mean $\text{TCI}$ | EW Ann. Vol. | GMV Ann. Vol. | GMV Risk Reduction | EW Diversification Ratio ($DR$) | GMV Diversification Ratio ($DR$) | GMV Expected Shortfall ($\text{ES}_{95}$) | Net Sharpe Ratio |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Full Sample** | 19.41% | 11.60% | 10.58% | 8.75% | 1.481 | 1.366 | -1.62% | 0.272 |
+| **Low TCI ($\le Q_{25}$)** | 9.27% | **9.66%** | **9.06%** | 6.18% | **1.592** | **1.459** | **-1.37%** | **0.915** |
+| **Moderate TCI ($Q_{25}$–$Q_{75}$)** | 17.40% | 10.88% | 10.10% | 7.15% | 1.482 | 1.363 | -1.54% | -0.440 |
+| **High TCI ($\ge Q_{75}$)** | 33.55% | **14.43%** | **12.71%** | **11.90%** | **1.368** | **1.276** | **-1.99%** | **0.954** |
+| **Crisis Peak ($\ge Q_{90}$)** | 45.69% | **17.27%** | **15.81%** | 8.46% | **1.266** | **1.228** | **-2.38%** | **1.459** |
+
+*Note: All differences between High- and Low-TCI regimes are statistically significant at $p < 0.0001$ ($F=2.23$ for EW variance, $F=1.97$ for GMV variance, $t=34.92$ for GMV $DR$). Net Sharpe ratio includes 10 bps round-trip transaction costs with daily drift.*
+
 ---
 
 ## 🚀 Quick Start Guide
@@ -225,6 +242,11 @@ All empirical tables, diagnostics, figures, and deliverables (`deliverables/manu
 
 - **Diebold, F. X., & Yılmaz, K. (2012)**. Better measures of econometric connectedness and propagation, with application to global equity markets. *The Economic Journal*, 122(559), 401-421.
 - **Diebold, F. X., & Yılmaz, K. (2014)**. On the network topology of variance decompositions: Measuring connectedness of financial firms. *Journal of Econometrics*, 182(1), 119-134.
+- **Choueifaty, Y., & Coignard, Y. (2008)**. Toward maximum diversification. *The Journal of Portfolio Management*, 35(1), 40-51.
+- **Corsi, F. (2009)**. A simple approximate long-memory model of realized volatility. *Journal of Financial Econometrics*, 7(2), 174-196.
+- **Antonakakis, N., Chatziantoniou, I., & Gabauer, D. (2020)**. Refined measures of dynamic connectedness based on time-varying parameter vector autoregressions. *Journal of Risk and Financial Management*, 13(4), 84.
+- **Bessler, W., Opfer, H., & Wolff, D. (2017)**. Multi-asset portfolio optimization and out-of-sample performance: An evaluation of Black–Litterman, minimum-variance, and equal-weighted approaches. *The European Journal of Finance*, 23(1), 1-30.
 - **Pesaran, H. H., & Shin, Y. (1998)**. Generalized impulse response analysis in linear multivariate models. *Economics Letters*, 58(1), 17-29.
 - **Parkinson, M. (1980)**. The extreme value method for estimating the variance of the rate of return. *Journal of Business*, 53(1), 61-65.
+
 

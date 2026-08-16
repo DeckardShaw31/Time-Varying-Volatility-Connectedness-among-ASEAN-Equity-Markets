@@ -109,10 +109,18 @@ def compile_manuscript_results() -> dict:
     # 6. Robustness Summary Grid & Alternative Lags
     robust_df = safe_read_csv(config.OUT_TABLES / "robustness_summary.csv")
     lags_df = safe_read_csv(config.OUT_TABLES / "robustness_alternative_lags.csv")
+    all_lags_diag = safe_read_csv(config.OUT_TABLES / "var_diagnostics_all_lags_vol_parkinson_intersection.csv")
     if not robust_df.empty:
         results["robustness_grid_summary"] = robust_df.to_dict(orient="records")
     if not lags_df.empty:
         results["robustness_alternative_fixed_lags"] = lags_df.to_dict(orient="records")
+    if not all_lags_diag.empty:
+        results["var_diagnostics_all_lags_parkinson"] = all_lags_diag.to_dict(orient="records")
+
+    # 7. Portfolio Diversification Application
+    port_df = safe_read_csv(config.OUT_TABLES / "portfolio_diversification_results.csv")
+    if not port_df.empty:
+        results["portfolio_diversification_regimes"] = port_df.to_dict(orient="records")
 
     return results
 
@@ -168,6 +176,21 @@ def flatten_results_to_dataframe(results: dict) -> pd.DataFrame:
     if hac_fit:
         for k, v in hac_fit.items():
             add_entry("HAC Regression (Fit)", k, v)
+
+    # Portfolio Diversification
+    port_list = results.get("portfolio_diversification_regimes", [])
+    for p in port_list:
+        reg_name = p.get("Regime", "")
+        add_entry(f"Portfolio Regime: {reg_name}", "Mean TCI", p.get("Mean_TCI_pct", ""), "%")
+        add_entry(f"Portfolio Regime: {reg_name}", "EW Annualized Volatility", p.get("EW_Ann_Vol_pct", ""), "%")
+        add_entry(f"Portfolio Regime: {reg_name}", "GMV Annualized Volatility", p.get("GMV_Ann_Vol_pct", ""), "%")
+        add_entry(f"Portfolio Regime: {reg_name}", "Volatility Reduction (GMV vs EW)", p.get("Vol_Reduction_pct", ""), "%")
+        add_entry(f"Portfolio Regime: {reg_name}", "EW Diversification Ratio", p.get("EW_DR", ""))
+        add_entry(f"Portfolio Regime: {reg_name}", "GMV Diversification Ratio", p.get("GMV_DR", ""))
+        add_entry(f"Portfolio Regime: {reg_name}", "EW Expected Shortfall (95%)", p.get("EW_ES95_pct", ""), "%")
+        add_entry(f"Portfolio Regime: {reg_name}", "GMV Expected Shortfall (95%)", p.get("GMV_ES95_pct", ""), "%")
+        add_entry(f"Portfolio Regime: {reg_name}", "GMV Annualized Turnover", p.get("GMV_Ann_Turnover_pct", ""), "%")
+        add_entry(f"Portfolio Regime: {reg_name}", "GMV Net Sharpe Ratio (10bps cost)", p.get("GMV_Sharpe_Net", ""))
 
     # Key Robustness Entries
     robust_list = results.get("robustness_grid_summary", [])
