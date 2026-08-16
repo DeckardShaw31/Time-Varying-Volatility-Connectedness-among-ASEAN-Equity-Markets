@@ -107,6 +107,57 @@ def residual_diagnostics(result, labels: list):
         logger.warning(f"    Portmanteau test failed: {e}")
 
 
+def get_var_diagnostics(result, lag_orders: dict, labels: list, nlags: int = 10) -> pd.DataFrame:
+    """
+    Extract comprehensive VAR diagnostics into a structured DataFrame.
+    """
+    from statsmodels.stats.stattools import durbin_watson
+    from scipy import linalg
+    from scripts.utils import var_companion_matrix
+
+    is_stable = result.is_stable()
+    min_root = float(np.min(np.abs(result.roots))) if len(result.roots) > 0 else np.nan
+    
+    coefs = np.array(result.coefs)
+    comp_mat = var_companion_matrix(coefs)
+    eigvals = linalg.eigvals(comp_mat)
+    max_eig = float(np.max(np.abs(eigvals))) if len(eigvals) > 0 else np.nan
+
+    # Durbin-Watson per market
+    dw_vals = durbin_watson(result.resid)
+    dw_dict = {f"DW_{lbl}": round(float(dw_vals[i]), 4) for i, lbl in enumerate(labels)}
+
+    # Portmanteau whiteness test
+    try:
+        pw_test = result.test_whiteness(nlags=nlags, signif=0.05)
+        portmanteau_stat = float(pw_test.test_statistic)
+        portmanteau_pval = float(pw_test.pvalue)
+        portmanteau_df = int(pw_test.df) if hasattr(pw_test, "df") else int(nlags * len(labels)**2 - result.k_ar * len(labels)**2)
+    except Exception as e:
+        logger.warning(f"Portmanteau calculation note: {e}")
+        portmanteau_stat = np.nan
+        portmanteau_pval = np.nan
+        portmanteau_df = np.nan
+
+    diag_data = {
+        "n_obs": int(result.nobs),
+        "k_vars": int(result.neqs),
+        "selected_lag": int(result.k_ar),
+        "lag_aic": int(lag_orders.get("aic", np.nan)),
+        "lag_bic": int(lag_orders.get("bic", np.nan)),
+        "lag_hqic": int(lag_orders.get("hqic", np.nan)),
+        "is_stable": bool(is_stable),
+        "min_poly_root": round(min_root, 6),
+        "max_eigenvalue": round(max_eig, 6),
+        "portmanteau_stat": round(portmanteau_stat, 4),
+        "portmanteau_df": portmanteau_df,
+        "portmanteau_pvalue": round(portmanteau_pval, 6),
+        **dw_dict
+    }
+
+    return pd.DataFrame([diag_data])
+
+
 def estimate_full_sample_var(panel: pd.DataFrame, ic: str = "bic",
                               max_lag: int = 10,
                               horizon: int = 10) -> dict:
@@ -116,7 +167,7 @@ def estimate_full_sample_var(panel: pd.DataFrame, ic: str = "bic",
     Returns
     -------
     dict with keys: result, lag_orders, is_stable, theta, theta_norm,
-                    connectedness, table
+                    connectedness, table, diagnostics
     """
     labels = list(panel.columns)
     logger.info(f"Full-sample VAR estimation on {labels}")
@@ -144,6 +195,9 @@ def estimate_full_sample_var(panel: pd.DataFrame, ic: str = "bic",
     # Residual diagnostics
     residual_diagnostics(result, labels)
 
+    # Full diagnostics dataframe
+    diagnostics_df = get_var_diagnostics(result, lag_orders, labels, nlags=10)
+
     # GFEVD
     logger.info(f"  Computing GFEVD (horizon = {horizon}) ...")
     coefs = np.array(result.coefs)
@@ -163,6 +217,7 @@ def estimate_full_sample_var(panel: pd.DataFrame, ic: str = "bic",
         "result": result,
         "lag_orders": lag_orders,
         "is_stable": is_stable,
+        "diagnostics": diagnostics_df,
         "theta": theta,
         "theta_norm": theta_norm,
         "connectedness": cm,
@@ -234,7 +289,16 @@ def main():
         # Save connectedness table
         table_path = config.OUT_TABLES / f"connectedness_table_{label}.csv"
         results["table"].to_csv(table_path)
-        logger.info(f"  Saved -> {table_path}")
+        deliv_table_path = config.DELIVERABLES / f"connectedness_table_{label}.csv"
+        results["table"].to_csv(deliv_table_path)
+        logger.info(f"  Saved -> {table_path} and {deliv_table_path}")
+
+        # Save VAR diagnostics
+        diag_path = config.OUT_TABLES / f"var_diagnostics_{label}.csv"
+        results["diagnostics"].to_csv(diag_path, index=False)
+        deliv_diag_path = config.DELIVERABLES / f"var_diagnostics_{label}.csv"
+        results["diagnostics"].to_csv(deliv_diag_path, index=False)
+        logger.info(f"  Saved diagnostics -> {diag_path} and {deliv_diag_path}")
 
         # Save GFEVD heatmap
         if measure == "vol_parkinson" and sync == "intersection":

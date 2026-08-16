@@ -58,6 +58,7 @@ STAGES = {
     9:  ("Rolling connectedness",     "scripts.09_connectedness"),
     10: ("Shock & contagion analysis","scripts.10_shock_analysis"),
     11: ("Robustness checks",         "scripts.11_robustness"),
+    12: ("Generate manuscript results","scripts.generate_manuscript_results"),
 }
 
 

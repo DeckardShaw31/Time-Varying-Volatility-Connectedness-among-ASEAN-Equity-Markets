@@ -154,6 +154,10 @@ nckh/
   - **GARCH-Filtered EWMA**: Fits univariate GARCH(1,1) models to daily stock return series (%) and computes time-varying conditional market correlations ($\lambda = 0.94$).
 - **Outputs**: `outputs/tables/robustness_summary.csv`, `outputs/tables/robustness_alternative_lags.csv`, and `outputs/results/garch_ewma_correlations_*.csv`.
 
+#### `scripts/generate_manuscript_results.py` — *Stage 12: Single-Source-of-Truth Dataset Generator*
+- **Role**: Compiles every single empirical number, test statistic, diagnostic, regression estimate, and robustness cell into a single authoritative master dataset.
+- **Outputs**: `deliverables/manuscript_results.json` and `deliverables/manuscript_results.csv` (as well as mirrored in `outputs/`).
+
 ---
 
 ## 📊 Key Empirical Findings
@@ -162,32 +166,38 @@ nckh/
 
 - **Total Connectedness Index ($\text{TCI}$)** (Sample: Jan 4, 2010 – Jul 17, 2026):
   - **Log Parkinson Range Volatility (Baseline)**: Full-sample $\text{TCI} = \mathbf{17.16\%}$. Rolling 250-day $\text{TCI}$ averages $\mathbf{20.04\%}$ (range: 3.21% – 56.03%).
-  - **Log Squared Returns**: Full-sample $\text{TCI} = \mathbf{9.27\%}$.
+  - **Log Squared Returns**: Full-sample $\text{TCI} = \mathbf{9.27\%}$. Rolling 250-day mean $\text{TCI} = \mathbf{11.88\%}$.
 - **Market Roles**:
-  - **Net Transmitters**: **Thailand** ($\text{Net} = +3.21\%$) and **Indonesia** ($\text{Net} = +0.40\%$).
-  - **Net Receivers**: **Malaysia** ($\text{Net} = -1.03\%$).
-  - **Sensitivity Note**: Vietnam's net spillover position is sensitive to the choice of volatility proxy ($\text{Net} = -0.96\%$ with Parkinson vs. $\text{Net} = +0.32\%$ with squared returns).
+  - **Net Transmitters**: **Thailand** ($\text{Net} = +3.21\%$) and **Indonesia** ($\text{Net} = +2.74\%$).
+  - **Net Receivers**: **Singapore** ($\text{Net} = -2.98\%$), **Philippines** ($\text{Net} = -1.52\%$), and **Vietnam** ($\text{Net} = -0.95\%$).
+  - **Sensitivity Note**: Vietnam's net spillover position is sensitive to the choice of volatility proxy ($\text{Net} = -0.72\%$ with Parkinson vs. $\text{Net} = +0.64\%$ with squared returns).
 
-### 2. Event-Window Analysis (Moving-Block Bootstrap)
+### 2. Event-Window Analysis (Moving-Block Bootstrap & Multiple Testing)
 
-| Shock Event | Shock Window | Tranquil Mean $\text{TCI}$ | Shock Mean $\text{TCI}$ | $\Delta \text{TCI}$ | MBB $B=20$ 95% CI | Bootstrap $p$-value | Shift Status |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **COVID-19 Pandemic** | 2020-01-30 to 2020-06-30 | 21.77% | **41.75%** | **+19.98%** | $[7.22, 31.16]$ | $p = 0.0018$ | **Shock Increase** |
-| **US-China Trade War** | 2018-03-22 to 2018-12-31 | 11.73% | **23.86%** | **+12.13%** | $[11.21, 15.47]$ | $p < 0.0002$ | **Shock Increase** |
-| **China Stock Crash** | 2015-06-12 to 2016-02-29 | 10.29% | **18.82%** | **+8.53%** | $[5.88, 11.69]$ | $p < 0.0002$ | **Shock Increase** |
-| **European Debt Crisis** | 2011-07-01 to 2012-06-30 | 21.10% | **28.73%** | **+7.63%** | $[5.42, 10.09]$ | $p < 0.0002$ | **Shock Increase** |
-| **Taper Tantrum** | 2013-05-22 to 2013-09-30 | 13.51% | **20.75%** | **+7.24%** | $[5.78, 10.03]$ | $p < 0.0002$ | **Shock Increase** |
-| **Monetary Tightening** | 2022-06-01 to 2022-12-31 | 13.21% | **17.90%** | **+4.69%** | $[2.57, 6.98]$ | $p < 0.0002$ | **Shock Increase** |
-| **Russia-Ukraine War** | 2022-02-24 to 2022-05-31 | 13.21% | **13.82%** | **+0.61%** | $[-0.88, 2.07]$ | $p = 0.2258$ | No shift |
-| **US Banking Crisis** | 2023-03-10 to 2023-05-31 | 19.03% | **16.87%** | **-2.16%** | $[-3.82, -0.77]$ | $p = 0.0034$ | No shift |
+| Shock Event | Shock Window | Tranquil Mean $\text{TCI}$ | Shock Mean $\text{TCI}$ | $\Delta \text{TCI}$ | MBB $B=20$ 95% CI | Raw $p$-value | Holm $p$-value | BH $p$-value | Shift Status |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **COVID-19 Pandemic** | 2020-01-30 to 2020-06-30 | 21.77% | **41.75%** | **+19.98%** | $[7.56, 31.12]$ | $p = 0.0014$ | $p = 0.0042$ | $p = 0.0018$ | **Shock Increase** |
+| **US-China Trade War** | 2018-03-22 to 2018-12-31 | 11.73% | **23.86%** | **+12.13%** | $[11.08, 15.46]$ | $p < 0.0002$ | $p = 0.0008$ | $p < 0.0002$ | **Shock Increase** |
+| **China Stock Crash** | 2015-06-12 to 2016-02-29 | 10.29% | **18.82%** | **+8.53%** | $[6.04, 11.60]$ | $p < 0.0002$ | $p = 0.0008$ | $p < 0.0002$ | **Shock Increase** |
+| **European Debt Crisis** | 2011-07-01 to 2012-06-30 | 21.10% | **28.73%** | **+7.63%** | $[5.53, 10.09]$ | $p < 0.0002$ | $p = 0.0008$ | $p < 0.0002$ | **Shock Increase** |
+| **Taper Tantrum** | 2013-05-22 to 2013-09-30 | 13.51% | **20.75%** | **+7.24%** | $[5.80, 10.04]$ | $p < 0.0002$ | $p = 0.0008$ | $p < 0.0002$ | **Shock Increase** |
+| **Monetary Tightening** | 2022-06-01 to 2022-12-31 | 13.21% | **17.90%** | **+4.69%** | $[2.57, 7.04]$ | $p < 0.0002$ | $p = 0.0008$ | $p < 0.0002$ | **Shock Increase** |
+| **Russia-Ukraine War** | 2022-02-24 to 2022-05-31 | 13.21% | **13.82%** | **+0.61%** | $[-0.92, 2.08]$ | $p = 0.2370$ | $p = 0.2370$ | $p = 0.2370$ | No shift |
+| **US Banking Crisis** | 2023-03-10 to 2023-05-31 | 19.03% | **16.87%** | **-2.16%** | $[-3.75, -0.72]$ | $p = 0.0016$ | $p = 0.0042$ | $p = 0.0018$ | No shift |
 
-### 3. Drivers of Connectedness (HAC Newey-West Regression)
+*Note: All six positive shock shifts remain statistically significant at 5% after adjusting for multiple testing across all eight events via Holm-Bonferroni (FWER) and Benjamini-Hochberg (FDR).*
+
+### 3. Drivers of Connectedness (HAC Newey-West Multi-Specification Models)
 
 $$\text{TCI}_m = 16.38 + 0.962 \cdot \text{VIX}_m - 0.130 \cdot \text{GPR}_m + 0.120 \cdot \Delta\text{Oil}_m + 2.263 \cdot \Delta\text{DGS2\_pp}_m - 0.368 \cdot \Delta\text{Dollar}_m + 0.249 \cdot \Delta\text{S\&P500}_m$$
 
-- **Global Financial Volatility ($\text{VIX}_m$)**: $\beta = \mathbf{+0.9621}$ ($z = +3.724, p = \mathbf{0.0002}$) — Dominant positive systemic spillover driver.
-- **Geopolitical Risk ($\text{GPR}_m$)**: $\beta = \mathbf{-0.1304}$ ($z = -4.438, p = \mathbf{0.0000}$) — Statistically significant negative coefficient (flight-to-safety / international decoupling).
-- **Oil Price Changes ($\Delta\text{Oil}_m$)**: $\beta = \mathbf{+0.1195}$ ($z = +2.153, p = \mathbf{0.0314}$) — Statistically significant positive commodity driver.
+- **Global Financial Volatility ($\text{VIX}_m$)**: $\beta = \mathbf{+0.9621}$ ($z = +3.724, p < 0.001$, Standardized $\beta^* = \mathbf{+0.5567}$) — Dominant positive systemic spillover driver.
+- **Geopolitical Risk ($\text{GPR}_m$)**: $\beta = \mathbf{-0.1304}$ ($z = -4.438, p < 0.001$, Standardized $\beta^* = \mathbf{-0.4672}$) — Statistically significant negative coefficient (flight-to-safety / international decoupling).
+- **Oil Price Changes ($\Delta\text{Oil}_m$)**: $\beta = \mathbf{+0.1195}$ ($z = +2.153, p = 0.0314$, Standardized $\beta^* = \mathbf{+0.1248}$) — Statistically significant positive commodity driver.
+- **Robustness Specifications**:
+  - **Lagged Uncertainty ($\text{VIX}_{m-1}, \text{GPR}_{m-1}$)**: $\beta_{\text{lag\_VIX}} = +0.9297$ ($p < 0.001$), $\beta_{\text{lag\_GPR}} = -0.1244$ ($p < 0.001$), $R^2 = 0.4686$.
+  - **Log-Transformed GPR ($\ln\text{GPR}$)**: $\beta = -18.120$ ($p < 0.001$), $R^2 = 0.5125$.
+  - **Threat vs. Act Decomposition**: $\beta_{\text{threat}} = -0.0434$ ($p = 0.018$), $\beta_{\text{act}} = -0.0711$ ($p = 0.022$).
 
 ---
 
@@ -207,6 +217,8 @@ pip install -r requirements.txt
 python run_all.py
 ```
 
+All empirical tables, diagnostics, figures, and deliverables (`deliverables/manuscript_results.json` and `deliverables/manuscript_results.csv`) will be generated automatically.
+
 ---
 
 ## 📜 Citation & References
@@ -215,3 +227,4 @@ python run_all.py
 - **Diebold, F. X., & Yılmaz, K. (2014)**. On the network topology of variance decompositions: Measuring connectedness of financial firms. *Journal of Econometrics*, 182(1), 119-134.
 - **Pesaran, H. H., & Shin, Y. (1998)**. Generalized impulse response analysis in linear multivariate models. *Economics Letters*, 58(1), 17-29.
 - **Parkinson, M. (1980)**. The extreme value method for estimating the variance of the rate of return. *Journal of Business*, 53(1), 61-65.
+

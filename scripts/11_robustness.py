@@ -2,15 +2,13 @@
 Stage 11: Robustness checks.
 
 Repeat the connectedness model under alternative specifications:
-  - Rolling windows: 200, 250, 300 days
-  - Forecast horizons: 5, 10, 20 days
-  - Alternative VAR lag orders
-  - Volatility: Parkinson vs. squared returns
+  - Rolling windows: 200, 250, 300 days (or 40, 50, 60 weeks)
+  - Forecast horizons: 5, 10, 20 days (or 1, 2, 4 weeks)
+  - Alternative fixed VAR lag orders (p = 1, 2, 3)
+  - Volatility: Parkinson vs. squared returns vs. absolute returns
   - Currency: local-currency vs. USD returns
   - Frequency: daily intersection vs. weekly
-  - GPR: conventional vs. AI-GPR
-  - Alternative shock-window definitions
-  - DCC-GARCH conditional correlations (if feasible)
+  - GARCH-filtered EWMA conditional correlations
 """
 
 import sys
@@ -307,14 +305,30 @@ def main():
                 fixed_lag=p, logger=None
             )
             if not r_df.empty:
-                lag_results.append({
+                tci = r_df["TCI"]
+                row_res = {
+                    "measure": baseline_key[0],
+                    "sync": baseline_key[1],
+                    "window": 250,
+                    "horizon": 10,
                     "lag_order": p,
-                    "tci_mean": round(r_df["TCI"].mean(), 2),
-                    "tci_std": round(r_df["TCI"].std(), 2),
-                    "tci_min": round(r_df["TCI"].min(), 2),
-                    "tci_max": round(r_df["TCI"].max(), 2),
-                    "tci_median": round(r_df["TCI"].median(), 2),
-                })
+                    "n_windows": len(r_df),
+                    "tci_mean": round(tci.mean(), 2),
+                    "tci_std": round(tci.std(), 2),
+                    "tci_min": round(tci.min(), 2),
+                    "tci_max": round(tci.max(), 2),
+                    "tci_median": round(tci.median(), 2),
+                }
+                for country in config.COUNTRY_ORDER:
+                    net_col = f"Net_{country}"
+                    if net_col in r_df.columns:
+                        row_res[f"mean_net_{country}"] = round(r_df[net_col].mean(), 2)
+
+                if "Net_Vietnam" in r_df.columns:
+                    vn_pct = (r_df["Net_Vietnam"] > 0).mean() * 100.0
+                    row_res["share_Vietnam_net_transmitter"] = round(vn_pct, 2)
+
+                lag_results.append(row_res)
         except Exception as e:
             logger.warning(f"    Lag p={p} failed: {e}")
 
@@ -322,7 +336,15 @@ def main():
         lag_df = pd.DataFrame(lag_results)
         lag_path = config.OUT_TABLES / "robustness_alternative_lags.csv"
         lag_df.to_csv(lag_path, index=False)
-        logger.info(f"  Saved alternative VAR lags -> {lag_path}")
+        deliv_lag_path = config.DELIVERABLES / "robustness_alternative_lags.csv"
+        lag_df.to_csv(deliv_lag_path, index=False)
+        logger.info(f"  Saved alternative VAR lags -> {lag_path} and {deliv_lag_path}")
+
+    # Also copy robustness_summary.csv to deliverables
+    if not summary.empty:
+        deliv_summary_path = config.DELIVERABLES / "robustness_summary.csv"
+        summary.to_csv(deliv_summary_path, index=False)
+        logger.info(f"  Saved robustness summary -> {deliv_summary_path}")
 
     # GARCH-filtered EWMA conditional correlations (fitted on daily return series in %)
     ret_path = config.DATA_PROC / "asean_returns_intersection.csv"

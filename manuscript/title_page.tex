@@ -1,0 +1,52 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[margin=2.54cm]{geometry}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage{newtxtext}
+\else
+  \usepackage{fontspec}
+  \setmainfont{Times New Roman}
+\fi
+\usepackage{setspace}
+
+\onehalfspacing
+\pagestyle{empty}
+
+% Complete all bracketed fields before submitting this file separately from
+% the anonymous manuscript.
+\newcommand{\AuthorNames}{[Insert author name(s)]}
+\newcommand{\AuthorDegrees}{[Insert academic degree(s)]}
+\newcommand{\AuthorAffiliations}{[Insert department, institution, city, and country]}
+\newcommand{\CorrespondingAuthor}{[Insert corresponding-author name]}
+\newcommand{\CorrespondingEmail}{[Insert email address]}
+\newcommand{\CorrespondingPhone}{[Insert telephone number with country code]}
+\newcommand{\ConferenceTrack}{Finance}
+
+\newcommand{\PaperTitle}{Time-Varying Volatility Connectedness among ASEAN Equity Markets:\\
+Evidence from Global Geopolitical and Macroeconomic Shocks}
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+{\large\bfseries ICFAA 2026 Submission Cover Information\par}
+\vspace{1.5cm}
+{\Large\bfseries \PaperTitle\par}
+\vspace{1.5cm}
+\begin{tabular}{@{}p{0.34\textwidth}p{0.58\textwidth}@{}}
+Author name(s): & \AuthorNames \\
+Academic degree(s): & \AuthorDegrees \\
+Affiliation(s): & \AuthorAffiliations \\
+Corresponding author: & \CorrespondingAuthor \\
+Email: & \CorrespondingEmail \\
+Telephone: & \CorrespondingPhone \\
+Conference track: & \textbf{\ConferenceTrack} \\
+\end{tabular}
+\end{center}
+\vfill
+\textit{Submission note:} Submit this cover page separately from the anonymous manuscript and remove all bracketed prompts before submission.
+\end{titlepage}
+
+\end{document}

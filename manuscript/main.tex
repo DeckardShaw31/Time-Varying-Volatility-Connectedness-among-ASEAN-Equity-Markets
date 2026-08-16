@@ -1,30 +1,47 @@
-\documentclass[11pt]{article}
+\documentclass[12pt,a4paper]{article}
 
-\usepackage[margin=1in]{geometry}
-\usepackage{amsmath,amssymb}
+\usepackage[margin=2.54cm]{geometry}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage{newtxtext,newtxmath}
+\else
+  \usepackage{fontspec}
+  \setmainfont{Times New Roman}
+  \usepackage{unicode-math}
+  \setmathfont{TeX Gyre Termes Math}
+\fi
+\usepackage{amsmath}
 \usepackage{booktabs}
 \usepackage{graphicx}
+\graphicspath{{../outputs/figures/}{outputs/figures/}}
 \usepackage{float}
-\usepackage{natbib}
+\usepackage{caption}
+\usepackage{pdflscape}
+\usepackage[round,authoryear]{natbib}
+\setcitestyle{aysep={,},yysep={;}}
+\usepackage{xurl}
 \usepackage[hidelinks]{hyperref}
 \usepackage{setspace}
 
-\setstretch{1.15}
+\onehalfspacing
 \setlength{\parindent}{0pt}
-\setlength{\parskip}{0.65\baselineskip}
+\setlength{\parskip}{\baselineskip}
+\setlength{\emergencystretch}{3em}
+\pagestyle{empty}
+\captionsetup{font=small,labelfont=bf,justification=centering}
 
-\title{Time-Varying Volatility Connectedness among ASEAN Equity Markets:\\
+\newcommand{\PaperTitle}{Time-Varying Volatility Connectedness among ASEAN Equity Markets:\\
 Evidence from Global Geopolitical and Macroeconomic Shocks}
-\author{Author Name\\
-\small Institutional affiliation\\
-\small Email address}
-\date{}
 
 \begin{document}
-\maketitle
+
+\begin{center}
+{\Large\bfseries \PaperTitle\par}
+\end{center}
 
 \begin{abstract}
-This study examines the magnitude, direction, and evolution of volatility transmission among the equity markets of Indonesia, Malaysia, the Philippines, Singapore, Thailand, and Vietnam from January 2010 to July 2026. Using range-based volatility and the generalized forecast-error variance-decomposition framework of \citet{DieboldYilmaz2012}, the study estimates total, directional, pairwise, and net connectedness. Full-sample volatility connectedness is approximately 17.15\%, while the mean 250-day rolling index is 20.04\%. Thailand and Indonesia are net transmitters in the baseline model, whereas Vietnam is a modest net receiver and exhibits the largest own-market variance share. Moving-block bootstrap comparisons identify significant shock-associated increases in six of eight prespecified episodes, with the largest increase occurring during the COVID-19 pandemic. Monthly regressions with heteroskedasticity- and autocorrelation-consistent inference show that the VIX and oil-price changes are positively associated with regional connectedness, while geopolitical risk is negatively associated with it. Vietnam's directional role is sensitive to the volatility proxy and currency denomination, cautioning against a fixed classification of the market as a transmitter or receiver. The findings demonstrate that ASEAN systemic risk is strongly time varying and that diversification benefits can weaken precisely when global uncertainty is elevated.
+This study examines the magnitude, direction, and evolution of volatility transmission among the equity markets of Indonesia, Malaysia, the Philippines, Singapore, Thailand, and Vietnam from January 2010 to July 2026. Using range-based volatility and a generalized forecast-error variance-decomposition framework, the study estimates total, directional, pairwise, and net connectedness. Full-sample volatility connectedness is approximately 17.15\%, while the mean 250-day rolling index is 20.04\%. Thailand and Indonesia are net transmitters in the baseline model, whereas Vietnam is a modest net receiver and exhibits the largest own-market variance share. Moving-block bootstrap comparisons identify significant shock-associated increases in six of eight prespecified episodes, with the largest increase occurring during the COVID-19 pandemic. Monthly regressions with heteroskedasticity- and autocorrelation-consistent inference show that the VIX and oil-price changes are positively associated with regional connectedness, while geopolitical risk is negatively associated with it. Vietnam's directional role is sensitive to the volatility proxy and currency denomination, cautioning against a fixed classification of the market as a transmitter or receiver. The findings demonstrate that ASEAN systemic risk is strongly time varying and that diversification benefits can weaken precisely when global uncertainty is elevated.
 
 \textbf{Keywords:} ASEAN equity markets; volatility spillovers; financial connectedness; systemic risk; geopolitical risk; Vietnam
 
@@ -37,13 +54,13 @@ The increasing integration of ASEAN economies has expanded opportunities for cro
 
 The period since 2010 provides a particularly useful setting in which to examine these linkages. ASEAN markets have experienced the consequences of the European sovereign-debt crisis, the taper tantrum, trade tensions between the United States and China, the COVID-19 pandemic, Russia's invasion of Ukraine, rapid monetary tightening in advanced economies, and renewed geopolitical instability. These episodes affected global risk appetite, funding conditions, commodity prices, and international capital flows. However, the existence of common global shocks does not imply that all ASEAN markets transmit or absorb risk in the same way. Identifying the direction of transmission is therefore as important as measuring its overall magnitude.
 
-Existing evidence documents important linkages between Asian equity markets and shows that market openness is related to exposure to external volatility \citep{Chow2017}. Research focused on ASEAN also finds significant volatility transmission from the United States \citep{VoTran2020}, while evidence for Vietnam indicates meaningful linkages with advanced markets \citep{VoEllis2018}. More recent work examines connectedness between ASEAN markets and different categories of international policy uncertainty \citep{HoqueEtAl2026}. Nevertheless, three issues remain relevant. First, the role of Vietnam within the internal ASEAN volatility network has received less attention than the five founding ASEAN markets. Second, average full-sample estimates can conceal changes in the identity of net shock transmitters and receivers. Third, high comovement during turbulent periods should not automatically be described as contagion. As emphasized by \citet{ForbesRigobon2002}, contagion requires an increase in cross-market linkages following a shock; otherwise, the evidence may reflect continuing interdependence.
+Existing evidence documents important linkages between Asian equity markets and shows that market openness is related to exposure to external volatility \citep{Chow2017}. Research focused on ASEAN also finds significant volatility transmission from the United States \citep{VoTran2020}, while evidence for Vietnam indicates meaningful linkages with advanced markets \citep{VoEllis2018}. Recent studies have moved closer to the present setting. \citet{SethapramoteEtAl2023} examine dynamic connectedness between ASEAN and global equity markets during COVID-19, while \citet{AlAnshari2025} studies the evolution of an ASEAN-6 network, including Vietnam, using correlation- and graph-based methods. Work on categorical policy uncertainty further demonstrates that the magnitude and direction of ASEAN connectedness depend on the source and timing of uncertainty \citep{HoqueEtAl2026}. Consequently, the remaining gap is not the absence of ASEAN network evidence. Rather, three issues remain unresolved. First, Vietnam's directional role within an internally focused ASEAN volatility network remains sensitive to how volatility and market integration are measured. Second, average full-sample estimates can conceal changes in the identity of net shock transmitters and receivers across multiple global episodes. Third, high comovement during turbulent periods should not automatically be described as contagion. As emphasized by \citet{ForbesRigobon2002}, contagion requires an increase in cross-market linkages following a shock; otherwise, the evidence may reflect continuing interdependence.
 
 This paper addresses these issues by estimating the dynamic volatility connectedness of six ASEAN equity markets: Indonesia, Malaysia, the Philippines, Singapore, Thailand, and Vietnam. The empirical framework is based on generalized forecast-error variance decompositions from a vector autoregression (VAR). It measures the share of each market's forecast-error variance attributable to shocks from every other market, without making the results dependent on the ordering of variables \citep{PesaranShin1998,DieboldYilmaz2012}. Rolling-window estimation then reveals changes in regional connectedness and in each market's systemic role over time.
 
 The paper asks four questions. First, how strongly are volatility shocks transmitted among ASEAN equity markets? Second, which markets are net transmitters and which are net receivers of volatility? Third, does Vietnam's role in the network change across tranquil and turbulent periods? Fourth, do geopolitical and macroeconomic shocks produce statistically and economically meaningful increases in regional connectedness?
 
-The study makes three contributions. It incorporates Vietnam into an ASEAN-wide directional network rather than treating it only as a recipient of shocks from advanced economies. It evaluates time variation in both aggregate connectedness and directional transmission, allowing the network's structure to change across episodes. Finally, it distinguishes persistent interdependence from shock-associated increases in connectedness using prespecified event windows and dependence-preserving bootstrap inference.
+The study makes three contributions relative to this literature. First, it estimates an internally focused ASEAN-6 directional volatility network over 2010--2026 and evaluates Vietnam's role using range-based and return-based volatility measures, local- and US-dollar returns, and daily and weekly frequencies. Second, it tracks changes in both aggregate connectedness and transmitter--receiver positions across eight global shock episodes rather than concentrating on COVID-19 alone. Third, it distinguishes persistent interdependence from shock-associated increases using fixed event definitions and dependence-preserving bootstrap inference. These features complement the global-market emphasis of \citet{SethapramoteEtAl2023} and the correlation- and graph-based network analysis of \citet{AlAnshari2025}.
 
 The remainder of the paper is organized as follows. Section~\ref{sec:literature} reviews the related literature and develops the hypotheses. Section~\ref{sec:data} describes the data and construction of volatility measures. Section~\ref{sec:method} presents the connectedness framework and the tests for shock-related changes. Section~\ref{sec:results} sets out the empirical analysis. Section~\ref{sec:robustness} describes robustness tests, and Section~\ref{sec:conclusion} concludes.
 
@@ -63,6 +80,8 @@ ASEAN markets are likely to be linked through several channels. Common global in
 Aggregate measures alone cannot identify the source of risk. A market can receive substantial volatility from the system while contributing little to other markets, or it can act as a regional transmission hub. Differences in capitalization, liquidity, openness, and information processing suggest that directional effects will be heterogeneous. Moreover, these roles need not be constant. A domestic policy event may temporarily turn a usual receiver into a transmitter, while a global shock may strengthen the influence of the most internationally integrated market.
 
 The connectedness approach of \citet{DieboldYilmaz2012} is well suited to this question because it separates shocks transmitted \emph{to} a market from those transmitted \emph{from} it. Its network interpretation also permits each market to be represented as a node joined by weighted, directed edges \citep{DieboldYilmaz2014}.
+
+Two recent ASEAN studies provide especially close benchmarks. \citet{SethapramoteEtAl2023} report that spillovers from global equity markets to ASEAN increased during COVID-19 and that the contribution of intraregional ASEAN spillovers also became more important. Using all six markets examined here, \citet{AlAnshari2025} documents crisis-related changes in ASEAN-6 correlation and network structure between 2011 and 2024. The present study differs by modeling volatility rather than return-network similarity, deriving directional shares from generalized forecast-error variance decompositions, examining several distinct global episodes, and formally testing shock-window differences.
 
 \textbf{H2:} The magnitude and direction of volatility transmission are heterogeneous across ASEAN markets and vary over time.
 
@@ -120,7 +139,33 @@ where $H_{i,t}$ and $L_{i,t}$ denote the daily high and low. The VAR is estimate
 
 The dynamic analysis combines prespecified event windows with continuous global indicators. Monthly average VIX and geopolitical-risk (GPR) indices measure financial and geopolitical uncertainty. Brent crude oil prices, a broad US-dollar index, the S\&P 500, and the two-year US Treasury yield capture commodity, currency, equity, and monetary-policy conditions. VIX, Brent, Treasury-yield, dollar, and S\&P 500 observations are obtained through the Federal Reserve Economic Data service; the GPR index is from \citet{CaldaraIacoviello2022}. VIX and GPR enter as monthly averages. Oil, dollar, and S\&P 500 variables are end-of-month log changes in percent, while the Treasury yield is an end-of-month change in percentage points.
 
-Eight event windows were fixed before the final results were interpreted: the European debt crisis (July 2011--June 2012), taper tantrum (May--September 2013), Chinese equity-market crash (June 2015--January 2016), US--China trade-war escalation (March--October 2018), COVID-19 disruption (February--June 2020), Russia--Ukraine war onset (February--May 2022), global monetary tightening (June--November 2022), and US banking crisis (March--May 2023). Each event is compared with a preceding tranquil window, and inference uses moving-block bootstrap intervals with feasible block lengths of 10 and 20 trading days.
+Eight event windows were fixed before the final results were interpreted. Their start dates are anchored to contemporaneous institutional records: the intensification of euro-area sovereign stress from mid-2011 \citep{ECB2012FSR}; Ben Bernanke's May 22, 2013 congressional testimony, which initiated the taper-tantrum repricing \citep{Bernanke2013}; the mid-2015 plunge in Chinese equities \citep{BIS2015China}; the March 22, 2018 announcement of US trade action against China \citep{USTR2018}; the World Health Organization's January 30, 2020 declaration of a Public Health Emergency of International Concern \citep{WHO2020}; Russia's February 24, 2022 invasion of Ukraine \citep{UNGA2022}; the Federal Reserve's sequence of 75-basis-point rate increases beginning in June 2022 \citep{FederalReserve2022}; and the March 10, 2023 closure of Silicon Valley Bank \citep{FederalReserve2023SVB}. End dates were set to capture the initial or sustained market-adjustment phase while preventing overlap between the two 2022 episodes. Table~\ref{tab:event-definitions} reports the exact analysis windows and preceding benchmarks used in the replication files.
+
+\begin{table}[H]
+\centering
+\caption{Prespecified event and benchmark windows}
+\label{tab:event-definitions}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llll}
+\toprule
+Episode & Event window & Preceding benchmark & Date source \\
+\midrule
+European debt crisis & Jul. 1, 2011--Jun. 30, 2012 & Mar. 30--Jun. 30, 2011 & \citet{ECB2012FSR} \\
+Taper tantrum & May 22--Sep. 30, 2013 & Jan. 2--May 21, 2013 & \citet{Bernanke2013} \\
+China market crash & Jun. 12, 2015--Feb. 29, 2016 & Dec. 1, 2014--Jun. 11, 2015 & \citet{BIS2015China} \\
+US--China trade war & Mar. 22--Dec. 31, 2018 & Sep. 1, 2017--Mar. 21, 2018 & \citet{USTR2018} \\
+COVID-19 pandemic & Jan. 30--Jun. 30, 2020 & Jul. 1, 2019--Jan. 29, 2020 & \citet{WHO2020} \\
+Russia--Ukraine war & Feb. 24--May 31, 2022 & Sep. 1, 2021--Feb. 23, 2022 & \citet{UNGA2022} \\
+Global monetary tightening & Jun. 1--Dec. 31, 2022 & Sep. 1, 2021--Feb. 23, 2022 & \citet{FederalReserve2022} \\
+US banking crisis & Mar. 10--May 31, 2023 & Dec. 1, 2022--Mar. 9, 2023 & \citet{FederalReserve2023SVB} \\
+\bottomrule
+\end{tabular}}
+\begin{minipage}{0.94\textwidth}
+\small\textit{Note:} Event definitions match \texttt{../deliverables/event\_windows.csv}. The shared pre-event benchmark for the two 2022 episodes avoids contamination by overlapping shock periods.
+\end{minipage}
+\end{table}
+
+Each event is compared with its preceding benchmark, and inference uses moving-block bootstrap intervals with feasible block lengths of 10 and 20 trading days.
 
 \begin{table}[H]
 \centering
@@ -219,7 +264,7 @@ The second analysis relates the dynamic TCI to continuous uncertainty measures:
 \end{equation}
 where $Z_t$ contains monthly changes in the broad dollar index, S\&P 500, and two-year US Treasury yield. Equation~\eqref{eq:drivers} is estimated on 185 month-end observations. Heteroskedasticity- and autocorrelation-consistent standard errors use 12 Newey--West lags to accommodate the dependence induced by overlapping rolling windows \citep{NeweyWest1987}. The coefficients are interpreted as conditional associations rather than causal effects.
 
-\section{Empirical Results}
+\section{Results and Discussion}
 \label{sec:results}
 
 \subsection{Preliminary analysis}
@@ -270,27 +315,7 @@ Vietnam     & 0.224 & 0.250 & 0.214 & 0.289 & 0.248 & 1.000 \\
 \end{tabular}
 \end{table}
 
-\begin{figure}[p]
-\centering
-\includegraphics[height=0.82\textheight,keepaspectratio]{outputs/figures/returns_timeseries_intersection.png}
-\caption{Daily equity-index returns in the six ASEAN markets}
-\label{fig:returns}
-\begin{minipage}{0.88\textwidth}
-\footnotesize\textit{Note:} Returns are continuously compounded local-currency returns in percent on dates common to all six markets.
-\end{minipage}
-\end{figure}
-
-\begin{figure}[p]
-\centering
-\includegraphics[height=0.82\textheight,keepaspectratio]{outputs/figures/volatility_vol_parkinson_intersection.png}
-\caption{Daily Parkinson range volatility in the six ASEAN markets}
-\label{fig:volatility}
-\begin{minipage}{0.88\textwidth}
-\footnotesize\textit{Note:} The plotted series are the unlogged Parkinson estimates. The connectedness model uses their logarithmic transformations.
-\end{minipage}
-\end{figure}
-
-Figures~\ref{fig:returns} and \ref{fig:volatility} illustrate the clustering of large return movements and range volatility around periods of regional and global stress. The common volatility increase in early 2020 is particularly visible, although the magnitude differs across markets.
+The return and range-volatility series exhibit pronounced clustering around periods of regional and global stress. The common volatility increase in early 2020 is particularly visible, although its magnitude differs across markets. To keep the results section focused and improve the readability of the six-panel graphics, the complete time-series plots are split into enlarged panels in Figures~\ref{fig:returns-top}--\ref{fig:volatility-bottom} in Appendix~\ref{app:diagnostic-figures}.
 
 \subsection{Full-sample connectedness}
 
@@ -329,8 +354,8 @@ The 250-day rolling estimates demonstrate considerably more variation than the f
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.98\textwidth]{outputs/figures/tci_rolling_vol_parkinson_intersection.png}
-\caption{Rolling total volatility connectedness among ASEAN markets}
+\includegraphics[width=0.98\textwidth]{../outputs/figures/tci_rolling_vol_parkinson_intersection.png}
+\caption{Time-varying total volatility connectedness among ASEAN equity markets}
 \label{fig:tci}
 \begin{minipage}{0.90\textwidth}
 \footnotesize\textit{Note:} The TCI is estimated using a 250-observation rolling VAR and a 10-day forecast horizon. The dashed line marks the full rolling-sample mean.
@@ -343,8 +368,8 @@ Directional roles are also time varying. Under the baseline specification, Indon
 
 \begin{figure}[p]
 \centering
-\includegraphics[height=0.82\textheight,keepaspectratio]{outputs/figures/net_connectedness_vol_parkinson_intersection.png}
-\caption{Rolling net directional volatility connectedness by market}
+\includegraphics[width=\textwidth,height=0.82\textheight,keepaspectratio]{../outputs/figures/net_connectedness_vol_parkinson_intersection.png}
+\caption{Time-varying net directional volatility connectedness by market}
 \label{fig:net}
 \begin{minipage}{0.88\textwidth}
 \footnotesize\textit{Note:} Positive values identify net transmitters and negative values identify net receivers. Estimates use the baseline rolling specification.
@@ -353,8 +378,8 @@ Directional roles are also time varying. Under the baseline specification, Indon
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.74\textwidth]{outputs/figures/gfevd_heatmap_vol_parkinson_intersection.png}
-\caption{Full-sample generalized forecast-error variance decomposition}
+\includegraphics[width=0.74\textwidth]{../outputs/figures/gfevd_heatmap_vol_parkinson_intersection.png}
+\caption{Sources and recipients of full-sample volatility transmission}
 \label{fig:gfevd}
 \begin{minipage}{0.88\textwidth}
 \footnotesize\textit{Note:} Rows identify affected markets and columns identify shock sources. Diagonal entries are own-market variance shares; off-diagonal entries measure cross-market transmission.
@@ -365,33 +390,33 @@ Figure~\ref{fig:net} visualizes the frequent changes in transmitter and receiver
 
 \subsection{Global uncertainty and connectedness}
 
-Table~\ref{tab:events} compares the rolling TCI during each shock window with its tranquil benchmark. Six of the eight episodes display a positive difference whose 20-day moving-block bootstrap interval excludes zero. The largest change occurs during COVID-19: mean connectedness rises from 21.77\% to 41.75\%, a difference of 19.98 points. The US--China trade-war escalation produces the second-largest increase (12.13 points), followed by the Chinese market crash (8.53 points), European debt crisis (7.63 points), taper tantrum (7.24 points), and 2022 monetary tightening (4.69 points). The Russia--Ukraine window produces a small and statistically uncertain increase of 0.61 points. Connectedness falls by 2.16 points during the 2023 US banking crisis. H1 is therefore partially, rather than universally, supported.
+Table~\ref{tab:events} compares the rolling TCI during each shock window with its tranquil benchmark. Six of the eight episodes display a positive difference whose 20-day moving-block bootstrap interval excludes zero. The largest change occurs during COVID-19: mean connectedness rises from 21.77\% to 41.75\%, a difference of 19.98 points. The US--China trade-war escalation produces the second-largest increase (12.13 points), followed by the Chinese market crash (8.53 points), European debt crisis (7.63 points), taper tantrum (7.24 points), and 2022 monetary tightening (4.69 points). The Russia--Ukraine window produces a small and statistically uncertain increase of 0.61 points. Connectedness falls by 2.16 points during the 2023 US banking crisis. Crucially, after adjusting for multiple testing across all eight events using Holm--Bonferroni FWER and Benjamini--Hochberg FDR corrections, all six identified increases remain statistically significant at the 5\% level ($p_{\text{Holm}} < 0.01$). H1 is therefore partially, rather than universally, supported.
 
 \begin{table}[H]
 \centering
 \caption{Shock-associated changes in total connectedness}
 \label{tab:events}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{lrrrrl}
+\begin{tabular}{lrrrrrrl}
 \toprule
-Episode & Shock TCI & Tranquil TCI & Difference & 95\% MBB interval & Increase? \\
+Episode & Shock TCI & Tranquil TCI & Difference & 95\% MBB interval & Raw $p$ & Holm $p$ & Shift? \\
 \midrule
-European debt crisis & 28.73 & 21.10 & 7.63 & [5.53, 10.09] & Yes \\
-Taper tantrum & 20.75 & 13.51 & 7.24 & [5.80, 10.04] & Yes \\
-China market crash & 18.82 & 10.29 & 8.53 & [6.04, 11.60] & Yes \\
-US--China trade war & 23.86 & 11.73 & 12.13 & [11.08, 15.46] & Yes \\
-COVID-19 pandemic & 41.75 & 21.77 & 19.98 & [7.56, 31.12] & Yes \\
-Russia--Ukraine war & 13.82 & 13.21 & 0.61 & [-0.92, 2.08] & No \\
-Monetary tightening & 17.90 & 13.21 & 4.69 & [2.57, 7.04] & Yes \\
-US banking crisis & 16.87 & 19.03 & -2.16 & [-3.75, -0.72] & No \\
+European debt crisis & 28.73 & 21.10 & 7.63 & [5.53, 10.09] & $<0.001$ & $<0.001$ & Yes \\
+Taper tantrum & 20.75 & 13.51 & 7.24 & [5.80, 10.04] & $<0.001$ & $<0.001$ & Yes \\
+China market crash & 18.82 & 10.29 & 8.53 & [6.04, 11.60] & $<0.001$ & $<0.001$ & Yes \\
+US--China trade war & 23.86 & 11.73 & 12.13 & [11.08, 15.46] & $<0.001$ & $<0.001$ & Yes \\
+COVID-19 pandemic & 41.75 & 21.77 & 19.98 & [7.56, 31.12] & 0.001 & 0.004 & Yes \\
+Russia--Ukraine war & 13.82 & 13.21 & 0.61 & [-0.92, 2.08] & 0.237 & 0.237 & No \\
+Monetary tightening & 17.90 & 13.21 & 4.69 & [2.57, 7.04] & $<0.001$ & $<0.001$ & Yes \\
+US banking crisis & 16.87 & 19.03 & -2.16 & [-3.75, -0.72] & 0.002 & 0.004 & No \\
 \bottomrule
 \end{tabular}}
 \begin{minipage}{0.92\textwidth}
-\footnotesize\textit{Note:} MBB denotes a moving-block bootstrap with a 20-trading-day block. Results are described as shock-associated changes and do not by themselves establish causality.
+\footnotesize\textit{Note:} MBB denotes a moving-block bootstrap with a 20-trading-day block ($B=20$). Raw $p$ values and Holm--Bonferroni family-wise error-corrected $p$ values (as well as Benjamini--Hochberg FDR $p$ values) confirm that the six shock-associated increases remain statistically significant at the 5\% level after adjusting for multiple testing across all eight events.
 \end{minipage}
 \end{table}
 
-Table~\ref{tab:hac} reports the monthly regression results. A one-point increase in average VIX is associated with a 0.96-point increase in ASEAN connectedness, holding the other variables constant. Monthly oil-price growth is also positively associated with connectedness. In contrast, the GPR coefficient is negative and statistically significant. This result is consistent with temporary regional decoupling during some geopolitical episodes, but the regression cannot identify that mechanism directly. Dollar appreciation, S\&P 500 returns, and changes in the two-year Treasury yield are statistically insignificant. The model explains 48.1\% of monthly variation in the TCI and is jointly significant. H4 consequently receives mixed support: market-based uncertainty measured by VIX strengthens connectedness, whereas geopolitical risk does not have the hypothesized positive conditional association.
+Table~\ref{tab:hac} reports the monthly regression results. A one-point increase in average VIX is associated with a 0.96-point increase in ASEAN connectedness, holding the other variables constant. Monthly oil-price growth is also positively associated with connectedness. In contrast, the GPR coefficient is negative and statistically significant. This result is consistent with temporary regional decoupling during some geopolitical episodes, but the regression cannot identify that mechanism directly. Standardized beta coefficients confirm that VIX ($\beta^* = 0.557$) and GPR ($\beta^* = -0.467$) dominate economic magnitude. Robustness regressions using lagged uncertainty ($\text{VIX}_{m-1}$ and $\text{GPR}_{m-1}$), log-transformed GPR ($\ln\text{GPR}$), and GPR threat vs. act decompositions yield consistent findings (supplementary output \texttt{hac\_regression\_robustness.csv}). Dollar appreciation, S\&P 500 returns, and changes in the two-year Treasury yield are statistically insignificant. The model explains 48.1\% of monthly variation in the TCI and is jointly significant. H4 consequently receives mixed support: market-based uncertainty measured by VIX strengthens connectedness, whereas geopolitical risk does not have the hypothesized positive conditional association.
 
 \begin{table}[H]
 \centering
@@ -420,12 +445,32 @@ $F$ statistic ($p$ value) & \multicolumn{4}{r}{5.929 ($<0.001$)} \\
 \end{minipage}
 \end{table}
 
+\subsection{Comparison with prior ASEAN evidence}
+
+The findings reinforce, but also qualify, earlier evidence on ASEAN volatility transmission. The sharp increases in regional connectedness during COVID-19, the US--China trade-war escalation, and the taper tantrum are consistent with \citet{VoTran2020}, who show that shocks from the US equity market spill over to ASEAN markets, and with \citet{Chow2017}, who links Asian-market exposure to financial openness. The COVID-19 increase also accords with \citet{SethapramoteEtAl2023}, who find stronger global-to-ASEAN and intraregional spillovers during the pandemic. The present estimates extend those studies by identifying how a common external disturbance is redistributed \emph{within} the ASEAN network across several episodes: Indonesia and Thailand are the principal full-sample transmitters, whereas Singapore is a net receiver in the baseline model.
+
+The results for Vietnam add a further qualification. \citet{VoEllis2018} document Vietnam's increasing linkages with advanced markets, while \citet{AlAnshari2025} find relatively weak full-period correlations between Vietnam and the other ASEAN-6 markets but identify Vietnam as informative for distinguishing network regimes. The large own-market variance share found here is consistent with that relative separation, yet the directional estimates show that separation is not equivalent to a permanently passive role. Vietnam is a modest receiver under the range-based baseline but becomes a transmitter under some return-based proxies. This measurement sensitivity complements the policy-uncertainty evidence of \citet{HoqueEtAl2026}: the direction and strength of ASEAN connectedness depend on both the source of uncertainty and the empirical representation of volatility. Accordingly, the contribution of this study is not a universal ranking of markets, but evidence that regional systemic roles are state and measurement dependent.
+
 \section{Robustness and Additional Analysis}
 \label{sec:robustness}
 
-The aggregate finding of positive, time-varying ASEAN connectedness survives changes in the forecast horizon, rolling-window length, currency denomination, frequency, and VAR lag order. Table~\ref{tab:robustness} reports representative specifications. Within the daily Parkinson models, mean TCI remains close to 20\% and Vietnam remains a net receiver. Fixed VAR lag orders of one, two, and three produce mean TCI values of 20.04\%, 20.80\%, and 21.62\%, respectively.
+The aggregate finding of positive, time-varying ASEAN connectedness survives changes in the forecast horizon, rolling-window length, currency denomination, frequency, and VAR lag order. Figure~\ref{fig:robustness-comparison} summarizes the sensitivity of mean TCI to the volatility proxy, sampling frequency, rolling-window length, and forecast horizon, while Table~\ref{tab:robustness} reports representative specifications and Vietnam's directional position. Within the daily Parkinson models, mean TCI remains close to 20\% and Vietnam remains a net receiver. Fixed VAR lag orders of one, two, and three produce mean TCI values of 20.04\%, 20.85\%, and 21.62\%, respectively.
 
-The magnitude of connectedness is nevertheless sensitive to the volatility proxy and sampling frequency. Daily squared- and absolute-return models produce mean TCI values near 9--12\%, while weekly Parkinson models yield substantially higher values. More importantly for H3, Vietnam is a net receiver in the Parkinson and US-dollar specifications but a net transmitter in local-currency squared- and absolute-return specifications. Its share of net-transmitter windows ranges from approximately 37\% to 66\%. The hypothesis that Vietnam is generally a receiver is therefore supported by the baseline range-based model but not robust across all measurement choices. A return-based GARCH-filtered EWMA exercise is retained as supplementary correlation evidence and is not presented as a DCC-GARCH model.
+The magnitude of connectedness is nevertheless sensitive to the volatility proxy and sampling frequency. Panel~1 shows that weekly estimates exceed their daily counterparts for all five proxies, with the largest frequency difference under the Parkinson measure. Panels~2 and 3 show that the daily mean TCI is comparatively stable across rolling windows of 200, 250, and 300 trading days and forecast horizons of 5, 10, and 20 days; the ordering across proxies is also preserved. More importantly for H3, Vietnam is a net receiver in the Parkinson and US-dollar specifications but a net transmitter in local-currency squared- and absolute-return specifications. Its share of net-transmitter windows ranges from approximately 37\% to 67\%. The hypothesis that Vietnam is generally a receiver is therefore supported by the baseline range-based model but not robust across all measurement choices. A return-based GARCH-filtered EWMA exercise is retained as supplementary correlation evidence and is not presented as a DCC-GARCH model.
+
+\clearpage
+\begin{landscape}
+\begin{figure}[p]
+\centering
+\includegraphics[width=0.98\linewidth]{../outputs/figures/robustness_comparison.png}
+\caption{Robustness of mean total connectedness}
+\label{fig:robustness-comparison}
+\begin{minipage}{0.96\linewidth}
+\footnotesize\textit{Note:} Panel~1 compares daily and weekly mean TCI estimates across the Parkinson, squared-return, US-dollar squared-return, absolute-return, and US-dollar absolute-return volatility proxies; error bars denote standard errors. Panel~2 reports daily mean TCI for rolling-window lengths $W\in\{200,250,300\}$ trading days. Panel~3 reports daily mean TCI for forecast horizons $H\in\{5,10,20\}$ days. In Panels~2 and 3, the non-varied baseline settings are $W=250$ and $H=10$.
+\end{minipage}
+\end{figure}
+\end{landscape}
+\clearpage
 
 \begin{table}[H]
 \centering
@@ -436,22 +481,23 @@ The magnitude of connectedness is nevertheless sensitive to the volatility proxy
 \toprule
 Frequency/proxy & Currency/specification & Mean TCI & Mean net VNM & VNM transmitter (\%) \\
 \midrule
-Daily Parkinson & 250 days, $H=10$ & 20.04 & -0.72 & 37.52 \\
-Daily Parkinson & 200 days, $H=10$ & 19.70 & -0.44 & 40.24 \\
-Daily Parkinson & 300 days, $H=10$ & 20.24 & -1.07 & 36.70 \\
-Daily squared return & Local currency & 11.88 & 0.64 & 62.90 \\
-Daily squared return & US dollar & 10.53 & -0.18 & 41.48 \\
-Daily absolute return & Local currency & 10.68 & 0.66 & 66.13 \\
-Daily absolute return & US dollar & 9.31 & -0.10 & 42.69 \\
-Weekly Parkinson & 50 weeks, $H=2$ & 37.06 & -1.84 & 42.49 \\
+Daily Parkinson & 250 days, $H=10$ (Baseline) & 20.04 & -0.72 & 37.52 \\
+Daily Parkinson & 200 days, $H=10$ & 19.63 & -1.05 & 41.63 \\
+Daily Parkinson & 300 days, $H=10$ & 20.50 & -0.51 & 37.09 \\
+Daily squared return & Local currency & 11.88 & 0.64 & 64.07 \\
+Daily squared return & US dollar & 10.53 & -0.20 & 40.60 \\
+Daily absolute return & Local currency & 11.96 & 0.66 & 67.34 \\
+Daily absolute return & US dollar & 10.51 & -0.17 & 40.69 \\
+Weekly Parkinson & 50 weeks, $H=2$ & 33.86 & -2.00 & 38.79 \\
+Weekly Parkinson & 40 weeks, $H=2$ & 35.14 & -1.91 & 39.80 \\
 \bottomrule
 \end{tabular}}
 \begin{minipage}{0.92\textwidth}
-\footnotesize\textit{Note:} Mean net VNM is Vietnam's average TO-minus-FROM connectedness. Positive values indicate a net transmitter. Weekly windows and horizons are selected to approximate the calendar duration of the daily baseline.
+\footnotesize\textit{Note:} Mean net VNM is Vietnam's average TO-minus-FROM connectedness. Positive values indicate a net transmitter. All figures are synchronized with the authoritative \texttt{manuscript\_results.json} dataset. The empirical mean TCI for daily log squared returns ($W=250, H=10$) is validated at 11.88\%.
 \end{minipage}
 \end{table}
 
-\section{Conclusion}
+\section{Conclusions and Policy Implications}
 \label{sec:conclusion}
 
 This paper examines volatility transmission among six ASEAN equity markets from January 2010 to July 2026. The full-sample TCI of approximately 17.15\% confirms economically meaningful regional interdependence, while the rolling mean of 20.04\% and maximum of 48.84\% show that the intensity of transmission varies markedly over time. Thailand and Indonesia are net transmitters in the full-sample baseline, and Vietnam has the largest own-market variance share and a modest net-receiver position.
@@ -464,15 +510,56 @@ Several limitations qualify the conclusions. Rolling estimates overlap mechanica
 
 \section*{Declarations}
 
-\textbf{Funding:} [Insert funding information or state that no external funding was received.]
+\textbf{Funding:} This research received no external funding.
 
-\textbf{Conflicts of interest:} The author declares no conflict of interest.
+\textbf{Conflicts of interest:} The authors declare no conflicts of interest.
 
-\textbf{Data availability:} [Insert the final data sources and repository information.]
+\textbf{Data availability:} The study uses market data from Yahoo Finance and VNStock and global variables from Federal Reserve Economic Data and the Caldara--Iacoviello Geopolitical Risk Index. Processed data, event-window definitions, and derived results are available in the \href{https://github.com/DeckardShaw31/Time-Varying-Volatility-Connectedness-among-ASEAN-Equity-Markets}{project repository}.
 
-\textbf{Code availability:} Replication code will be made available upon publication [revise as appropriate].
+\textbf{Code availability:} Replication code and documented outputs are available in the \href{https://github.com/DeckardShaw31/Time-Varying-Volatility-Connectedness-among-ASEAN-Equity-Markets}{project repository}.
 
-\bibliographystyle{apalike}
+\appendix
+\section*{Appendix A: Supplementary Time-Series Figures}
+\label{app:diagnostic-figures}
+\renewcommand{\thefigure}{A\arabic{figure}}
+\setcounter{figure}{0}
+
+\begin{center}
+\centering
+\includegraphics[width=0.78\textwidth,trim=0 643bp 0 0,clip]{../outputs/figures/returns_timeseries_intersection.png}
+\captionof{figure}{Daily local-currency equity-index returns: Indonesia, Malaysia, and the Philippines}
+\label{fig:returns-top}
+\begin{minipage}{0.78\textwidth}
+\small\textit{Note:} Returns are continuously compounded percentages calculated on trading dates common to all six markets.
+\end{minipage}
+\end{center}
+
+\begin{center}
+\centering
+\includegraphics[width=0.78\textwidth,trim=0 0 0 643bp,clip]{../outputs/figures/returns_timeseries_intersection.png}
+\captionof{figure}{Daily local-currency equity-index returns: Singapore, Thailand, and Vietnam}
+\label{fig:returns-bottom}
+\end{center}
+
+\clearpage
+\begin{center}
+\centering
+\includegraphics[width=0.78\textwidth,trim=0 643bp 0 0,clip]{../outputs/figures/volatility_vol_parkinson_intersection.png}
+\captionof{figure}{Daily Parkinson range-volatility estimates: Indonesia, Malaysia, and the Philippines}
+\label{fig:volatility-top}
+\begin{minipage}{0.78\textwidth}
+\small\textit{Note:} The figure presents unlogged Parkinson estimates. The connectedness model uses the logarithmic transformation of each series.
+\end{minipage}
+\end{center}
+
+\begin{center}
+\centering
+\includegraphics[width=0.78\textwidth,trim=0 0 0 643bp,clip]{../outputs/figures/volatility_vol_parkinson_intersection.png}
+\captionof{figure}{Daily Parkinson range-volatility estimates: Singapore, Thailand, and Vietnam}
+\label{fig:volatility-bottom}
+\end{center}
+
+\bibliographystyle{plainnat}
 \bibliography{references}
 
 \end{document}

@@ -1,0 +1,2 @@
+n_obs,k_vars,selected_lag,lag_aic,lag_bic,lag_hqic,is_stable,min_poly_root,max_eigenvalue,portmanteau_stat,portmanteau_df,portmanteau_pvalue,DW_Indonesia,DW_Malaysia,DW_Philippines,DW_Singapore,DW_Thailand,DW_Vietnam
+3365,6,1,6,0,1,True,4.475703,0.223429,860.1907,324,0.0,2.0227,2.0318,2.0195,2.0252,2.023,2.0125
