@@ -150,7 +150,7 @@ nckh/
 - **Implementation**:
   - **90-Specification Grid**: Evaluates 10 panel variants (Parkinson, Squared LCU/USD, Absolute LCU/USD $\times$ Daily/Weekly), using econometrically equivalent weekly parameters ($W_{\text{weekly}} \in \{40, 50, 60\}$ weeks, $H_{\text{weekly}} \in \{1, 2, 4\}$ weeks).
   - **Directional Spillover Metrics**: Exports mean net directional connectedness for all 6 countries and `share_Vietnam_net_transmitter`.
-  - **Fixed VAR Lags**: Evaluates fixed lag orders $p \in \{1, 2, 3\}$.
+  - **Fixed VAR Lags**: Evaluates fixed lag orders $p \in \{1, 2, 3, 4, 7\}$ covering BIC ($p=1, 3$), HQIC ($p=4$), and AIC ($p=7$) lag selections.
   - **GARCH-Filtered EWMA**: Fits univariate GARCH(1,1) models to daily stock return series (%) and computes time-varying conditional market correlations ($\lambda = 0.94$).
 - **Outputs**: `outputs/tables/robustness_summary.csv`, `outputs/tables/robustness_alternative_lags.csv`, and `outputs/results/garch_ewma_correlations_*.csv`.
 

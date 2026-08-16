@@ -290,15 +290,16 @@ def main():
 
         plot_robustness_comparison(summary)
 
-    # Alternative fixed VAR lag order checks (p = 1, 2, 3) on baseline panel
+    # Alternative fixed VAR lag order checks (p = 1, 2, 3, 4, 7) on baseline panel
+    # Evaluates BIC (p=1, 3), HQIC (p=4), and AIC (p=7) selected lag orders
     baseline_key = ("vol_parkinson", "intersection")
     if baseline_key not in panels:
         baseline_key = next(iter(panels.keys()))
 
     b_panel = panels[baseline_key]
-    logger.info(f"\n  Running alternative fixed VAR lag orders (p=1, 2, 3) on {baseline_key} ...")
+    logger.info(f"\n  Running alternative fixed VAR lag orders (p=1, 2, 3, 4, 7) on {baseline_key} ...")
     lag_results = []
-    for p in [1, 2, 3]:
+    for p in [1, 2, 3, 4, 7]:
         try:
             r_df = rolling_connectedness(
                 data=b_panel, window=250, horizon=10,
@@ -312,6 +313,7 @@ def main():
                     "window": 250,
                     "horizon": 10,
                     "lag_order": p,
+                    "criterion_selection": "BIC" if p in (1, 3) else ("HQIC" if p == 4 else ("AIC" if p == 7 else "Manual")),
                     "n_windows": len(r_df),
                     "tci_mean": round(tci.mean(), 2),
                     "tci_std": round(tci.std(), 2),
