@@ -269,7 +269,7 @@ where $Z_t$ contains monthly changes in the broad dollar index, S\&P 500, and tw
 
 \subsection{Preliminary analysis}
 
-Table~\ref{tab:descriptive} summarizes daily local-currency returns. Average returns are positive in all six markets, ranging from 0.009\% in Malaysia to 0.037\% in Vietnam. Vietnam also has the largest unconditional standard deviation (1.331\%), followed by the Philippines (1.281\%) and Indonesia (1.210\%). Every return series is negatively skewed and strongly leptokurtic. Jarque--Bera tests reject normality, while augmented Dickey--Fuller tests reject a unit root at conventional levels. The large negative returns observed in each market and the excess kurtosis estimates between 9.13 and 21.04 confirm the importance of modeling volatility rather than relying on Gaussian return assumptions.
+Table~\ref{tab:descriptive} summarizes daily local-currency returns for the synchronized intersection panel ($N=3,352$). Average returns are positive in all six markets, ranging from 0.008\% in Malaysia to 0.038\% in Vietnam. Vietnam also has the largest unconditional standard deviation (1.333\%), followed by the Philippines (1.282\%) and Indonesia (1.209\%). Every return series is negatively skewed and strongly leptokurtic. Jarque--Bera tests reject normality, while augmented Dickey--Fuller tests reject a unit root at conventional levels. The large negative returns observed in each market and the excess kurtosis estimates between 9.13 and 21.06 confirm the importance of modeling volatility rather than relying on Gaussian return assumptions.
 
 \begin{table}[H]
 \centering
@@ -280,18 +280,18 @@ Table~\ref{tab:descriptive} summarizes daily local-currency returns. Average ret
 \toprule
  & Indonesia & Malaysia & Philippines & Singapore & Thailand & Vietnam \\
 \midrule
-Observations & 3,366 & 3,366 & 3,366 & 3,366 & 3,366 & 3,366 \\
-Mean & 0.026 & 0.009 & 0.023 & 0.019 & 0.024 & 0.037 \\
-Std. deviation & 1.210 & 0.724 & 1.281 & 0.933 & 1.110 & 1.331 \\
+Observations & 3,352 & 3,352 & 3,352 & 3,352 & 3,352 & 3,352 \\
+Mean & 0.024 & 0.008 & 0.021 & 0.018 & 0.023 & 0.038 \\
+Std. deviation & 1.209 & 0.725 & 1.282 & 0.933 & 1.111 & 1.333 \\
 Minimum & -13.326 & -6.189 & -14.322 & -13.767 & -11.428 & -15.583 \\
 Maximum & 9.704 & 6.626 & 12.345 & 7.365 & 7.653 & 7.462 \\
-Skewness & -0.966 & -0.501 & -0.565 & -1.335 & -1.011 & -1.040 \\
-Excess kurtosis & 11.880 & 9.127 & 11.740 & 21.035 & 12.222 & 9.751 \\
-ADF statistic & -10.918 & -39.326 & -23.966 & -14.348 & -16.892 & -19.894 \\
+Skewness & -0.966 & -0.500 & -0.563 & -1.336 & -1.011 & -1.042 \\
+Excess kurtosis & 11.961 & 9.132 & 11.724 & 21.059 & 12.229 & 9.741 \\
+ADF statistic & -10.843 & -39.271 & -23.935 & -14.399 & -16.876 & -19.870 \\
 \bottomrule
 \end{tabular}}
-\begin{minipage}{0.90\textwidth}
-\footnotesize\textit{Note:} Returns are percentages. Jarque--Bera and ADF test p-values are below 0.001 for all markets.
+\begin{minipage}{0.95\textwidth}
+\footnotesize\textit{Note:} Returns are percentage log changes across synchronized common trading dates. Jarque--Bera and ADF test $p$-values are below 0.001 for all markets. Minimum values in the synchronized intersection panel (e.g., $-15.583\%$ for Vietnam, $-13.767\%$ for Singapore on April 8, 2025; $-14.322\%$ for Philippines on March 19, 2020) reflect multi-day compounded returns spanning non-overlapping national holidays across ASEAN markets. On continuous domestic trading calendars, Vietnam's daily price changes strictly respect the Ho Chi Minh Stock Exchange (HOSE) statutory daily price limit of $\pm 7\%$ (the maximum single-day domestic drop is $-6.910\%$). Our baseline connectedness model relies on intraday Parkinson range volatility, which is measured entirely within each daily session and invariant to calendar gaps.
 \end{minipage}
 \end{table}
 
