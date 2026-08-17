@@ -216,10 +216,10 @@ $$\text{TCI}_m = 16.36 + 0.962 \cdot \text{VIX}_m - 0.130 \cdot \text{GPR}_m + 0
 | **Crisis Peak ($\ge Q_{90}$)** | 45.79% | **17.32%** | **15.86%** | 8.43% | **1.265** | **1.229** | **-2.38%** | **1.461** |
 
 - **Moving-Block Bootstrap Inference ($B=20$ days, 2,000 replications)**:
-  - $\Delta \sigma_{\text{EW}} = \mathbf{+4.93\%}$ ($95\%\text{ CI } [0.85, 10.07], p = 0.009$)
-  - $\Delta \sigma_{\text{GMV}} = \mathbf{+3.81\%}$ ($95\%\text{ CI } [0.65, 7.79], p = 0.018$)
-  - $\Delta DR = \mathbf{-0.189}$ ($95\%\text{ CI } [-0.23, -0.14], p < 0.001$)
-  - $\Delta \text{ES}_{95} = \mathbf{-0.63\%}$ ($95\%\text{ CI } [-1.49, 0.07], p = 0.091$)
+  - $\Delta \sigma_{\text{EW}}$: Observed $\mathbf{+4.79\%}$ (Bootstrap mean $+4.93\%$, $95\%\text{ CI } [0.85, 10.07], p = 0.009$)
+  - $\Delta \sigma_{\text{GMV}}$: Observed $\mathbf{+3.67\%}$ (Bootstrap mean $+3.81\%$, $95\%\text{ CI } [0.65, 7.79], p = 0.018$)
+  - $\Delta DR$: Observed $\mathbf{-0.184}$ (Bootstrap mean $-0.189$, $95\%\text{ CI } [-0.23, -0.14], p < 0.001$)
+  - $\Delta \text{ES}_{95}$: Observed $\mathbf{-0.62\%}$ (Bootstrap mean $-0.63\%$, $95\%\text{ CI } [-1.49, 0.07], p = 0.091$)
 
 ---
 

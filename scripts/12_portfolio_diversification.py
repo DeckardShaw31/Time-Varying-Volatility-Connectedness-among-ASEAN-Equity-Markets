@@ -342,6 +342,14 @@ def run_portfolio_analysis(window: int = 250, cost_bps: float = 10.0):
         es_h = float(r_h[r_h <= var_h].mean()) if (r_h <= var_h).sum() > 0 else float(var_h)
         diff_es95_gmv.append(es_h - es_l)
 
+    obs_diff_map = {
+        "EW Realized Volatility (%)": round(float(comp_df.loc[3, "EW_Ann_Vol_pct"] - comp_df.loc[1, "EW_Ann_Vol_pct"]), 3),
+        "GMV Realized Volatility (%)": round(float(comp_df.loc[3, "GMV_Ann_Vol_pct"] - comp_df.loc[1, "GMV_Ann_Vol_pct"]), 3),
+        "Diversification Ratio (DR)": round(float(comp_df.loc[3, "GMV_DR"] - comp_df.loc[1, "GMV_DR"]), 3),
+        "GMV 95% Expected Shortfall (%)": round(float(comp_df.loc[3, "GMV_ES95_pct"] - comp_df.loc[1, "GMV_ES95_pct"]), 3),
+        "GMV Volatility Reduction (%)": round(float(comp_df.loc[3, "Vol_Reduction_pct"] - comp_df.loc[1, "Vol_Reduction_pct"]), 3),
+    }
+
     boot_metrics = [
         ("EW Realized Volatility (%)", diff_ew_vol, True),
         ("GMV Realized Volatility (%)", diff_gmv_vol, True),
@@ -354,6 +362,7 @@ def run_portfolio_analysis(window: int = 250, cost_bps: float = 10.0):
     for name, draws, expect_positive in boot_metrics:
         arr = np.array(draws)
         d_mean = float(np.mean(arr))
+        obs_val = obs_diff_map.get(name, d_mean)
         ci_lower = float(np.percentile(arr, 2.5))
         ci_upper = float(np.percentile(arr, 97.5))
         if expect_positive:
@@ -365,7 +374,8 @@ def run_portfolio_analysis(window: int = 250, cost_bps: float = 10.0):
 
         boot_rows.append({
             "Metric": name,
-            "Diff_High_minus_Low": round(d_mean, 3),
+            "Observed_Diff_High_minus_Low": obs_val,
+            "Bootstrap_Mean_Diff": round(d_mean, 3),
             "MBB_95_CI_Lower": round(ci_lower, 3),
             "MBB_95_CI_Upper": round(ci_upper, 3),
             "MBB_95_CI": f"[{ci_lower:.2f}, {ci_upper:.2f}]",

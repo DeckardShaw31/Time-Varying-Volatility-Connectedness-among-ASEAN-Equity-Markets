@@ -3,7 +3,7 @@
     "title": "Time-Varying Volatility Connectedness among ASEAN Equity Markets",
     "time_frame": "2010-01-01 to 2026-06-30",
     "sample_start_trading_day": "2010-01-04",
-    "sample_end_trading_day": "2026-07-17",
+    "sample_end_trading_day": "2026-06-29",
     "markets": [
       "Indonesia",
       "Malaysia",
@@ -14,16 +14,16 @@
     ],
     "baseline_model": {
       "volatility_proxy": "Parkinson range volatility (log-transformed)",
-      "data_synchronization": "Intersection of common trading days (N=3,366)",
+      "data_synchronization": "Intersection of common trading days (N=3,330 Parkinson / N=3,353 Returns)",
       "lag_selection": "BIC (enforcing min lag 1 for VAR stability)",
       "forecast_horizon_days": 10,
       "rolling_window_days": 250
     },
     "reconciliation_note": {
-      "squared_return_w250_h10_mean_tci": 11.88,
+      "squared_return_w250_h10_mean_tci": 11.89,
       "squared_return_mean_net_vietnam": 0.64,
-      "squared_return_vietnam_transmitter_share_pct": 64.07,
-      "explanation": "The empirical mean TCI for log squared returns (W=250, H=10, daily intersection) is exactly 11.88%. The previously cited 39.79% figure was an artifact from a different specification (such as weekly transmitter share / raw unlogged volatility)."
+      "squared_return_vietnam_transmitter_share_pct": 64.36,
+      "explanation": "The empirical mean TCI for log squared returns (W=250, H=10, daily intersection) is exactly 11.89%. The previously cited 39.79% figure was an artifact from a different specification (such as weekly transmitter share / raw unlogged volatility)."
     }
   },
   "descriptive_statistics_returns": [
@@ -4010,7 +4010,8 @@
   "portfolio_bootstrap_inference": [
     {
       "Metric": "EW Realized Volatility (%)",
-      "Diff_High_minus_Low": 4.925,
+      "Observed_Diff_High_minus_Low": 4.79,
+      "Bootstrap_Mean_Diff": 4.925,
       "MBB_95_CI_Lower": 0.854,
       "MBB_95_CI_Upper": 10.072,
       "MBB_95_CI": "[0.85, 10.07]",
@@ -4019,7 +4020,8 @@
     },
     {
       "Metric": "GMV Realized Volatility (%)",
-      "Diff_High_minus_Low": 3.811,
+      "Observed_Diff_High_minus_Low": 3.67,
+      "Bootstrap_Mean_Diff": 3.811,
       "MBB_95_CI_Lower": 0.655,
       "MBB_95_CI_Upper": 7.786,
       "MBB_95_CI": "[0.65, 7.79]",
@@ -4028,7 +4030,8 @@
     },
     {
       "Metric": "Diversification Ratio (DR)",
-      "Diff_High_minus_Low": -0.189,
+      "Observed_Diff_High_minus_Low": -0.184,
+      "Bootstrap_Mean_Diff": -0.189,
       "MBB_95_CI_Lower": -0.23,
       "MBB_95_CI_Upper": -0.145,
       "MBB_95_CI": "[-0.23, -0.14]",
@@ -4037,7 +4040,8 @@
     },
     {
       "Metric": "GMV 95% Expected Shortfall (%)",
-      "Diff_High_minus_Low": -0.626,
+      "Observed_Diff_High_minus_Low": -0.62,
+      "Bootstrap_Mean_Diff": -0.626,
       "MBB_95_CI_Lower": -1.492,
       "MBB_95_CI_Upper": 0.074,
       "MBB_95_CI": "[-1.49, 0.07]",
@@ -4046,7 +4050,8 @@
     },
     {
       "Metric": "GMV Volatility Reduction (%)",
-      "Diff_High_minus_Low": 5.627,
+      "Observed_Diff_High_minus_Low": 5.64,
+      "Bootstrap_Mean_Diff": 5.627,
       "MBB_95_CI_Lower": -4.633,
       "MBB_95_CI_Upper": 15.765,
       "MBB_95_CI": "[-4.63, 15.76]",

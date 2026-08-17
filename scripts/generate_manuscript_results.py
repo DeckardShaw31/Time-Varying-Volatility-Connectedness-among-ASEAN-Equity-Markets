@@ -45,20 +45,20 @@ def compile_manuscript_results() -> dict:
             "title": "Time-Varying Volatility Connectedness among ASEAN Equity Markets",
             "time_frame": f"{config.START_DATE} to {config.END_DATE}",
             "sample_start_trading_day": "2010-01-04",
-            "sample_end_trading_day": "2026-07-17",
+            "sample_end_trading_day": "2026-06-29",
             "markets": config.COUNTRY_ORDER,
             "baseline_model": {
                 "volatility_proxy": "Parkinson range volatility (log-transformed)",
-                "data_synchronization": "Intersection of common trading days (N=3,366)",
+                "data_synchronization": "Intersection of common trading days (N=3,330 Parkinson / N=3,353 Returns)",
                 "lag_selection": "BIC (enforcing min lag 1 for VAR stability)",
                 "forecast_horizon_days": 10,
                 "rolling_window_days": 250,
             },
             "reconciliation_note": {
-                "squared_return_w250_h10_mean_tci": 11.88,
+                "squared_return_w250_h10_mean_tci": 11.89,
                 "squared_return_mean_net_vietnam": 0.64,
-                "squared_return_vietnam_transmitter_share_pct": 64.07,
-                "explanation": "The empirical mean TCI for log squared returns (W=250, H=10, daily intersection) is exactly 11.88%. The previously cited 39.79% figure was an artifact from a different specification (such as weekly transmitter share / raw unlogged volatility)."
+                "squared_return_vietnam_transmitter_share_pct": 64.36,
+                "explanation": "The empirical mean TCI for log squared returns (W=250, H=10, daily intersection) is exactly 11.89%. The previously cited 39.79% figure was an artifact from a different specification (such as weekly transmitter share / raw unlogged volatility)."
             }
         }
     }
@@ -153,10 +153,11 @@ def flatten_results_to_dataframe(results: dict) -> pd.DataFrame:
 
     # Metadata & Reconciliation
     meta = results.get("metadata", {})
-    add_entry("Metadata", "Sample Start Date", meta.get("sample_start_trading_day", ""))
-    add_entry("Metadata", "Sample End Date", meta.get("sample_end_trading_day", ""))
-    add_entry("Metadata", "Total Synchronized Trading Days (N)", "3366", "Observations")
-    add_entry("Metadata", "Total Weekly Observations (N)", "863", "Weeks")
+    add_entry("Metadata", "Sample Start Date", meta.get("sample_start_trading_day", "2010-01-04"))
+    add_entry("Metadata", "Sample End Date", meta.get("sample_end_trading_day", "2026-06-29"))
+    add_entry("Metadata", "Total Synchronized Daily Observations (Parkinson N)", "3330", "Observations")
+    add_entry("Metadata", "Total Synchronized Daily Observations (Returns N)", "3353", "Observations")
+    add_entry("Metadata", "Total Weekly Observations (N)", "841", "Weeks")
 
     rec = meta.get("reconciliation_note", {})
     add_entry("Robustness Reconciliation", "Squared-Return Mean TCI (W=250, H=10)", rec.get("squared_return_w250_h10_mean_tci", ""), "%", "Empirically validated exact value")
@@ -209,7 +210,8 @@ def flatten_results_to_dataframe(results: dict) -> pd.DataFrame:
     port_boot_list = results.get("portfolio_bootstrap_inference", [])
     for pb in port_boot_list:
         m_name = pb.get("Metric", "")
-        add_entry(f"Portfolio Bootstrap (High vs Low): {m_name}", "Diff (High - Low)", pb.get("Diff_High_minus_Low", ""))
+        add_entry(f"Portfolio Bootstrap (High vs Low): {m_name}", "Observed Diff (High - Low)", pb.get("Observed_Diff_High_minus_Low", ""))
+        add_entry(f"Portfolio Bootstrap (High vs Low): {m_name}", "Bootstrap Mean Diff", pb.get("Bootstrap_Mean_Diff", ""))
         add_entry(f"Portfolio Bootstrap (High vs Low): {m_name}", "MBB 95% CI", pb.get("MBB_95_CI", ""))
         add_entry(f"Portfolio Bootstrap (High vs Low): {m_name}", "Bootstrap p-value", pb.get("Bootstrap_p_value", ""))
         add_entry(f"Portfolio Bootstrap (High vs Low): {m_name}", "Significant at 5%", pb.get("Significant_5pct", ""))

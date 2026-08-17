@@ -1,6 +1,6 @@
-Metric,Diff_High_minus_Low,MBB_95_CI_Lower,MBB_95_CI_Upper,MBB_95_CI,Bootstrap_p_value,Significant_5pct
-EW Realized Volatility (%),4.925,0.854,10.072,"[0.85, 10.07]",0.0090,Yes
-GMV Realized Volatility (%),3.811,0.655,7.786,"[0.65, 7.79]",0.0180,Yes
-Diversification Ratio (DR),-0.189,-0.23,-0.145,"[-0.23, -0.14]",< 0.001,Yes
-GMV 95% Expected Shortfall (%),-0.626,-1.492,0.074,"[-1.49, 0.07]",0.0910,No
-GMV Volatility Reduction (%),5.627,-4.633,15.765,"[-4.63, 15.76]",0.2730,No
+Metric,Observed_Diff_High_minus_Low,Bootstrap_Mean_Diff,MBB_95_CI_Lower,MBB_95_CI_Upper,MBB_95_CI,Bootstrap_p_value,Significant_5pct
+EW Realized Volatility (%),4.79,4.925,0.854,10.072,"[0.85, 10.07]",0.0090,Yes
+GMV Realized Volatility (%),3.67,3.811,0.655,7.786,"[0.65, 7.79]",0.0180,Yes
+Diversification Ratio (DR),-0.184,-0.189,-0.23,-0.145,"[-0.23, -0.14]",< 0.001,Yes
+GMV 95% Expected Shortfall (%),-0.62,-0.626,-1.492,0.074,"[-1.49, 0.07]",0.0910,No
+GMV Volatility Reduction (%),5.64,5.627,-4.633,15.765,"[-4.63, 15.76]",0.2730,No
